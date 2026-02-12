@@ -29,7 +29,12 @@ pip freeze -> requirements.txt
 
 Установить правило в `.vscode/settings.json`
 
-
 ```
 "editor.rulers": [80]
+```
+
+## Запуск сервиса
+
+```
+python3 -m src.main
 ```
