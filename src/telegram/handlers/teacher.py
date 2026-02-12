@@ -7,8 +7,7 @@ from ..states import Common, Teacher
 from ..keyboards import (
     back_keyboard, 
     role_keyboard, 
-    teacher_main_keyboard, 
-    remove_keyboard,
+    teacher_main_keyboard,
 )
 from ...config import TG_TEACHER_PASSWORD
 
@@ -63,5 +62,5 @@ async def teacher_logout(message: Message, state: FSMContext):
     await state.set_state(Common.choosing_role)
     await message.answer(
         "Вы вышли из режима преподавателя. Выберите вашу роль:",
-        reply_markup=remove_keyboard
+        reply_markup=role_keyboard()
     )

@@ -3,13 +3,12 @@ from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from ..keyboards import role_keyboard
+from ..keyboards import role_keyboard, remove_keyboard
 from ..states import Common
 from .teacher import router as teacher_router
 
 
 router = Router()
-router.include_router(teacher_router)
 
 
 @router.message(CommandStart())
@@ -35,5 +34,5 @@ async def something_wrong(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
         "Похоже что-то пошло не так. Введите /start чтобы перезапустить бота.",
-        reply_markup=role_keyboard()
+        reply_markup=remove_keyboard
     )
