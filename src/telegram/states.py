@@ -17,3 +17,6 @@ class Teacher(StatesGroup):
 
     # Раздел со студентами и потоками
     students_menu = State()
+
+    # Раздел с добавлением студентов
+    add_students_menu = State()

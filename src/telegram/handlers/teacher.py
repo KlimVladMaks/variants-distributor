@@ -66,11 +66,25 @@ async def teacher_logout(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(Teacher.main_menu), F.text == BT.STUDENTS_AND_FLOWS)
-async def add_student_menu(message: Message, state: FSMContext):
+async def students_menu(message: Message, state: FSMContext):
     """Открытие меню для работы со студентами и потоками"""
     await state.set_state(Teacher.students_menu)
     await message.answer(
         "Раздел для работы со студентами и потоками. " \
         "Выберите интересующую вас опцию:",
-        reply_markup=TK.students_and_flows_menu()
+        reply_markup=TK.students_menu()
     )
+
+
+@router.message(StateFilter(Teacher.students_menu), F.text == BT.ADD_STUDENTS)
+async def add_students_menu(message: Message, state: FSMContext):
+    """Открытие меню у опции добавления студентов"""
+    await state.set_state(Teacher.add_students_menu)
+    await message.answer(
+        "Как вы хотите добавить студентов?",
+        reply_markup=TK.add_students_menu()
+    )
+
+
+
+

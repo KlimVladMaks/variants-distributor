@@ -35,6 +35,7 @@ async def unknown_role(message: Message, state: FSMContext):
 async def something_wrong(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
-        "Похоже что-то пошло не так. Введите /start чтобы перезапустить бота.",
-        reply_markup=remove_keyboard
+        "Похоже что-то пошло не так. " \
+        "Нажмите на /start чтобы перезапустить бота.",
+        reply_markup=CK.start()
     )

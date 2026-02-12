@@ -13,3 +13,6 @@ class ButtonText:
     EXIT = "Выход"
     ADD_STUDENTS = "Добавить студентов"
     DEL_STUDENTS = "Удалить студентов"
+    CSV = "CSV"
+    MANUALLY = "Вручную"
+    START = "/start"

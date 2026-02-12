@@ -27,6 +27,14 @@ class CommonKeyboards:
             keyboard=buttons,
             resize_keyboard=True
         )
+    
+    def start():
+        """Кнопка 'start'"""
+        buttons = [[KeyboardButton(text=BT.START)]]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
 
 
 class TeacherKeyboards:
@@ -44,12 +52,23 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
 
-
-    def students_and_flows_menu():
+    def students_menu():
         """Раздел со студентами и потоками"""
         buttons = [
             [KeyboardButton(text=BT.ADD_STUDENTS)],
             [KeyboardButton(text=BT.DEL_STUDENTS)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+    
+    def add_students_menu():
+        """Опция добавления студентов"""
+        buttons = [
+            [KeyboardButton(text=BT.CSV)],
+            [KeyboardButton(text=BT.MANUALLY)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(
