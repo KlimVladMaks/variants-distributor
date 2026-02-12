@@ -3,9 +3,11 @@ from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from ..keyboards import role_keyboard, remove_keyboard
+from ..keyboards import (
+    CommonKeyboards as CK,
+    remove_keyboard
+)
 from ..states import Common
-from .teacher import router as teacher_router
 
 
 router = Router()
@@ -17,7 +19,7 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.set_state(Common.choosing_role)
     await message.answer(
         "Здравствуйте! Выберите вашу роль:",
-        reply_markup=role_keyboard()
+        reply_markup=CK.choosing_role()
     )
 
 
@@ -25,7 +27,7 @@ async def cmd_start(message: Message, state: FSMContext):
 async def unknown_role(message: Message, state: FSMContext):
     await message.answer(
         "Не удалось распознать роль. Выберите доступную вам роль:",
-        reply_markup=role_keyboard()
+        reply_markup=CK.choosing_role()
     )
 
 

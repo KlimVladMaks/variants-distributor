@@ -10,10 +10,10 @@ class Common(StatesGroup):
 class Teacher(StatesGroup):
     """Состояния пользователя с ролью 'Преподаватель'"""
     # Ожидание ввода пароля
-    waiting_for_password = State()
+    password_input = State()
 
     # Главное меню
     main_menu = State()
 
-    # Секции (временно)
-    sections = State()
+    # Раздел со студентами и потоками
+    students_menu = State()

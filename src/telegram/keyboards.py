@@ -4,36 +4,64 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-def role_keyboard():
-    """Клавиатура выбора роли: 'Студент' или 'Преподаватель'"""
-    buttons = [
-        [KeyboardButton(text="Студент")],
-        [KeyboardButton(text="Преподаватель")]
-    ]
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
+from .button_text import ButtonText as BT
 
-def back_keyboard():
-    """Клавиатура с кнопкой 'Назад'"""
-    buttons = [[KeyboardButton(text="Назад")]]
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
 
-def teacher_main_keyboard():
-    """Главное меню преподавателя"""
-    buttons = [
-        [KeyboardButton(text="Студенты и потоки")],
-        [KeyboardButton(text="Варианты")],
-        [KeyboardButton(text="Статистика")],
-        [KeyboardButton(text="Выход")]
-    ]
-    return ReplyKeyboardMarkup(
-        keyboard=buttons,
-        resize_keyboard=True
-    )
+class CommonKeyboards:
+    """Общие клавиатуры"""
+    def choosing_role():
+        """Выбор роли: 'Студент' или 'Преподаватель'"""
+        buttons = [
+            [KeyboardButton(text=BT.STUDENT)],
+            [KeyboardButton(text=BT.TEACHER)]
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
 
+    def back():
+        """Кнопка 'Назад'"""
+        buttons = [[KeyboardButton(text=BT.BACK)]]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+
+class TeacherKeyboards:
+    """Клавиатуры для раздела 'Преподаватель'"""
+    def main_menu():
+        """Главное меню"""
+        buttons = [
+            [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
+            [KeyboardButton(text=BT.VARIANTS)],
+            [KeyboardButton(text=BT.STATS)],
+            [KeyboardButton(text=BT.EXIT)]
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+
+    def students_and_flows_menu():
+        """Раздел со студентами и потоками"""
+        buttons = [
+            [KeyboardButton(text=BT.ADD_STUDENTS)],
+            [KeyboardButton(text=BT.DEL_STUDENTS)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+
+class StudentKeyboards:
+    """Клавиатуры для раздела 'Студент'"""
+    pass
+
+
+# Для удаления клавиатуры
 remove_keyboard = ReplyKeyboardRemove()

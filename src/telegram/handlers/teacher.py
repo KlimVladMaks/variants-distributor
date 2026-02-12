@@ -5,37 +5,37 @@ from aiogram.fsm.context import FSMContext
 
 from ..states import Common, Teacher
 from ..keyboards import (
-    back_keyboard, 
-    role_keyboard, 
-    teacher_main_keyboard,
+    CommonKeyboards as CK,
+    TeacherKeyboards as TK,
 )
+from ..button_text import ButtonText as BT
 from ...config import TG_TEACHER_PASSWORD
 
 
 router = Router()
 
 
-@router.message(StateFilter(Common.choosing_role), F.text == "Преподаватель")
+@router.message(StateFilter(Common.choosing_role), F.text == BT.TEACHER)
 async def teacher_start(message: Message, state: FSMContext):
     """Начало авторизации преподавателя"""
-    await state.set_state(Teacher.waiting_for_password)
+    await state.set_state(Teacher.password_input)
     await message.answer(
         "Введите пароль:",
-        reply_markup=back_keyboard()
+        reply_markup=CK.back()
     )
 
 
-@router.message(StateFilter(Teacher.waiting_for_password), F.text == "Назад")
+@router.message(StateFilter(Teacher.password_input), F.text == BT.BACK)
 async def back_from_password(message: Message, state: FSMContext):
     """Возврат к выбору роли из ввода пароля"""
     await state.set_state(Common.choosing_role)
     await message.answer(
         "Выберите вашу роль:",
-        reply_markup=role_keyboard()
+        reply_markup=CK.choosing_role()
     )
 
 
-@router.message(StateFilter(Teacher.waiting_for_password))
+@router.message(StateFilter(Teacher.password_input))
 async def check_password(message: Message, state: FSMContext):
     """Проверка пароля"""
     password = message.text
@@ -43,24 +43,34 @@ async def check_password(message: Message, state: FSMContext):
     if password == TG_TEACHER_PASSWORD:
         await state.set_state(Teacher.main_menu)
         await message.answer(
-            "Добро пожаловать в главное меню! " \
-            "Выберите интересующий вас раздел:",
-            reply_markup=teacher_main_keyboard()
+            "Главное меню. Выберите интересующий вас раздел:",
+            reply_markup=TK.main_menu()
         )
     
     else:
         await message.answer(
             "Неверный пароль. " \
             "Попробуйте ввести верный пароль или вернитесь назад.",
-            reply_markup=back_keyboard()
+            reply_markup=CK.back()
         )
 
 
-@router.message(StateFilter(Teacher.main_menu), F.text == "Выход")
+@router.message(StateFilter(Teacher.main_menu), F.text == BT.EXIT)
 async def teacher_logout(message: Message, state: FSMContext):
     """Выход из режима преподавателя"""
     await state.set_state(Common.choosing_role)
     await message.answer(
         "Вы вышли из режима преподавателя. Выберите вашу роль:",
-        reply_markup=role_keyboard()
+        reply_markup=CK.choosing_role()
+    )
+
+
+@router.message(StateFilter(Teacher.main_menu), F.text == BT.STUDENTS_AND_FLOWS)
+async def add_student_menu(message: Message, state: FSMContext):
+    """Открытие меню для работы со студентами и потоками"""
+    await state.set_state(Teacher.students_menu)
+    await message.answer(
+        "Раздел для работы со студентами и потоками. " \
+        "Выберите интересующую вас опцию:",
+        reply_markup=TK.students_and_flows_menu()
     )
