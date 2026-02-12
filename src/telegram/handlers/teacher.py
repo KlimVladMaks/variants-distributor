@@ -26,7 +26,7 @@ async def teacher_start(message: Message, state: FSMContext):
 
 
 @router.message(StateFilter(Teacher.password_input), F.text == BT.BACK)
-async def back_from_password(message: Message, state: FSMContext):
+async def back_from_check_password(message: Message, state: FSMContext):
     """Возврат к выбору роли из ввода пароля"""
     await state.set_state(Common.choosing_role)
     await message.answer(
@@ -76,6 +76,16 @@ async def students_menu(message: Message, state: FSMContext):
     )
 
 
+@router.message(StateFilter(Teacher.students_menu), F.text == BT.BACK)
+async def back_from_students_menu(message: Message, state: FSMContext):
+    """Возврат в главное меню из раздела 'Студенты и потоки'"""
+    await state.set_state(Teacher.main_menu)
+    await message.answer(
+        "Главное меню. Выберите интересующий вас раздел:",
+        reply_markup=TK.main_menu()
+    )
+
+
 @router.message(StateFilter(Teacher.students_menu), F.text == BT.ADD_STUDENTS)
 async def add_students_menu(message: Message, state: FSMContext):
     """Открытие меню у опции добавления студентов"""
@@ -84,7 +94,3 @@ async def add_students_menu(message: Message, state: FSMContext):
         "Как вы хотите добавить студентов?",
         reply_markup=TK.add_students_menu()
     )
-
-
-
-
