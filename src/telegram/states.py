@@ -3,20 +3,13 @@ from aiogram.fsm.state import State, StatesGroup
 
 class Common(StatesGroup):
     """Общие состояния (используются до выбора пользователем роли)"""
-    # Выбор пользователем роли
     choosing_role_st = State()
 
 
 class Teacher(StatesGroup):
     """Состояния пользователя с ролью 'Преподаватель'"""
-    # Ожидание ввода пароля
     auth_st = State()
-
-    # Главное меню
     main_menu_st = State()
-
-    # Раздел со студентами и потоками
     students_menu_st = State()
-
-    # Раздел с добавлением студентов
     add_students_menu_st = State()
+    add_students_via_csv_st = State()

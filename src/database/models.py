@@ -22,7 +22,7 @@ class Student(Base):
     __tablename__ = 'students'
     id = Column(Integer, primary_key=True)
     stream_id = Column(Integer, ForeignKey('flows.id'), nullable=False)
-    isu = Column(String, nullable=False)
+    isu = Column(String, nullable=False, unique=True)
     full_name = Column(String, nullable=False)
 
 
@@ -30,8 +30,8 @@ class Variant(Base):
     """Вариант"""
     __tablename__ = 'variants'
     id = Column(Integer, primary_key=True)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    title = Column(String, nullable=False, unique=True)
+    description = Column(String, nullable=False, unique=True)
 
 
 class Distribution(Base):

@@ -1,6 +1,6 @@
 from aiogram import Router
 from aiogram.filters import CommandStart, StateFilter
-from aiogram.types import Message
+from aiogram.types import Message, Document
 from aiogram.fsm.context import FSMContext
 
 from .keyboards import (
@@ -10,12 +10,15 @@ from .keyboards import (
 from .button_text import ButtonText as BT
 from .states import Common, Teacher
 from ..config import TG_TEACHER_PASSWORD
+from .utils import parse_students_csv
 
 
 router = Router()
 
 
+# ============================
 # ===== TEACHER HANDLERS =====
+# ============================
 
 
 @router.message(StateFilter(Teacher.auth_st))
@@ -113,6 +116,10 @@ async def teacher_add_students_menu(message: Message,
         await state.set_state(Teacher.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
+    elif message.text == BT.CSV:
+        await state.set_state(Teacher.add_students_via_csv_st)
+        await teacher_add_students_via_csv(message, state, is_init=True)
+
     else:
         await message.answer(
             "Команда не распознана. Как вы хотите добавить студентов?",
@@ -120,7 +127,40 @@ async def teacher_add_students_menu(message: Message,
         )
 
 
+@router.message(StateFilter(Teacher.add_students_via_csv_st))
+async def teacher_add_students_via_csv(message: Message, 
+                                       state: FSMContext, 
+                                       is_init=False):
+    """Добавление студентов через CSV"""
+    if is_init:
+        await message.answer(
+            "Добавление студентов через CSV-файл. " \
+            "Загрузите CSV-файл со студентами:",
+            reply_markup=CK.cancel_kb()
+        )
+    
+    elif message.text == BT.CANCEL:
+        await state.set_state(Teacher.add_students_menu_st)
+        await teacher_add_students_menu(message, state, is_init=True)
+    
+    elif message.document:
+        document: Document = message.document
+        file = await message.bot.get_file(document.file_id)
+        file_content = await message.bot.download_file(file.file_path)
+        students = parse_students_csv(file_content.read())
+        print(students)
+        
+    else:
+        await message.answer(
+            "Ввод не распознан. " \
+            "Загрузите CSV-файл со студентами или отмените операцию.",
+            reply_markup=CK.cancel_kb()
+        )
+
+
+# ===========================
 # ===== COMMON HANDLERS =====
+# ===========================
 
 
 @router.message(StateFilter(Common.choosing_role_st))
