@@ -9,7 +9,7 @@ from .button_text import ButtonText as BT
 
 class CommonKeyboards:
     """Общие клавиатуры"""
-    def choosing_role():
+    def choosing_role_kb():
         """Выбор роли: 'Студент' или 'Преподаватель'"""
         buttons = [
             [KeyboardButton(text=BT.STUDENT)],
@@ -20,15 +20,23 @@ class CommonKeyboards:
             resize_keyboard=True
         )
 
-    def back():
+    def back_kb():
         """Кнопка 'Назад'"""
         buttons = [[KeyboardButton(text=BT.BACK)]]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
             resize_keyboard=True
         )
+
+    def cancel_kb():
+        """Кнопка 'Отмена'"""
+        buttons = [[KeyboardButton(text=BT.CANCEL)]]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
     
-    def start():
+    def start_kb():
         """Кнопка 'start'"""
         buttons = [[KeyboardButton(text=BT.START)]]
         return ReplyKeyboardMarkup(
@@ -39,7 +47,7 @@ class CommonKeyboards:
 
 class TeacherKeyboards:
     """Клавиатуры для раздела 'Преподаватель'"""
-    def main_menu():
+    def main_menu_kb():
         """Главное меню"""
         buttons = [
             [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
@@ -52,7 +60,7 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
 
-    def students_menu():
+    def students_menu_kb():
         """Раздел со студентами и потоками"""
         buttons = [
             [KeyboardButton(text=BT.ADD_STUDENTS)],
@@ -64,7 +72,7 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
     
-    def add_students_menu():
+    def add_students_menu_kb():
         """Опция добавления студентов"""
         buttons = [
             [KeyboardButton(text=BT.CSV)],

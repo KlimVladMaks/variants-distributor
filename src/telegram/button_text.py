@@ -16,3 +16,4 @@ class ButtonText:
     CSV = "CSV"
     MANUALLY = "Вручную"
     START = "/start"
+    CANCEL = "Отмена"
