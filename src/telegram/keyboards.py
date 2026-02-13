@@ -4,7 +4,7 @@ from aiogram.types import (
     ReplyKeyboardRemove,
 )
 
-from .button_text import ButtonText as BT
+from .constants import ButtonText as BT
 
 
 class CommonKeyboards:
@@ -39,6 +39,17 @@ class CommonKeyboards:
     def start_kb():
         """Кнопка 'start'"""
         buttons = [[KeyboardButton(text=BT.START)]]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+    
+    def yes_or_no_kb():
+        """Клавиатура Да или Нет"""
+        buttons = [
+            [KeyboardButton(text=BT.YES)],
+            [KeyboardButton(text=BT.NO)],
+        ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
             resize_keyboard=True

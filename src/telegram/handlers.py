@@ -7,10 +7,17 @@ from .keyboards import (
     CommonKeyboards as CK,
     TeacherKeyboards as TK,
 )
-from .button_text import ButtonText as BT
+from .constants import (
+    ButtonText as BT,
+    FSMKeys
+)
 from .states import Common, Teacher
 from ..config import TG_TEACHER_PASSWORD
-from .utils import parse_students_csv
+from .utils import (
+    parse_students_csv, 
+    students_list_to_str,
+    unique_flows_to_str,
+)
 
 
 router = Router()
@@ -108,7 +115,7 @@ async def teacher_add_students_menu(message: Message,
     """Меню преподавателя 'Добавить студентов'"""
     if is_init:
         await message.answer(
-            "Как вы хотите добавить студентов?",
+            "Добавление студентов. Выберите способ добавления:",
             reply_markup=TK.add_students_menu_kb()
         )
     
@@ -144,17 +151,67 @@ async def teacher_add_students_via_csv(message: Message,
         await teacher_add_students_menu(message, state, is_init=True)
     
     elif message.document:
+        status_message = await message.answer("Обработка файла...")
         document: Document = message.document
         file = await message.bot.get_file(document.file_id)
         file_content = await message.bot.download_file(file.file_path)
         students = parse_students_csv(file_content.read())
-        print(students)
+        await status_message.edit_text("Файл обработан.")
+        await state.update_data({
+            FSMKeys.STUDENTS: students
+        })
+        await state.set_state(Teacher.confirm_students_csv_input_st)
+        await teacher_confirm_students_csv_input(message, 
+                                                 state,  
+                                                 is_init=True)
         
     else:
         await message.answer(
             "Ввод не распознан. " \
             "Загрузите CSV-файл со студентами или отмените операцию.",
             reply_markup=CK.cancel_kb()
+        )
+
+
+@router.message(StateFilter(Teacher.confirm_students_csv_input_st))
+async def teacher_confirm_students_csv_input(message: Message, 
+                                             state: FSMContext,
+                                             is_init=False):
+    """Подтверждение ввода студентов из CSV-файла"""
+    students = (await state.get_data())[FSMKeys.STUDENTS]
+
+    if is_init:
+        await message.answer(
+            "Удалось распознать следующих студентов:"
+        )
+        await message.answer(
+            students_list_to_str(students)
+        )
+        await message.answer(
+            "Удалось распознать следующие потоки:"
+        )
+        await message.answer(
+            unique_flows_to_str(students)
+        )
+        await message.answer(
+            "Сохранить?",
+            reply_markup=CK.yes_or_no_kb()
+        )
+    
+    elif message.text == BT.NO:
+        await message.answer(
+            "Отмена сохранения данных из CSV-файла."
+        )
+        await state.update_data({
+            FSMKeys.STUDENTS: None
+        })
+        await state.set_state(Teacher.add_students_menu_st)
+        await teacher_add_students_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Команда не распознана. Сохранить?",
+            reply_markup=CK.yes_or_no_kb()
         )
 
 

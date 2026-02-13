@@ -17,3 +17,11 @@ class ButtonText:
     MANUALLY = "Вручную"
     START = "/start"
     CANCEL = "Отмена"
+    YES = "Да"
+    NO = "Нет"
+
+
+@dataclass(frozen=True)
+class FSMKeys:
+    """Ключи для хранения данных в """
+    STUDENTS = "students"
