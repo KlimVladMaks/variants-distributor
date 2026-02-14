@@ -18,6 +18,10 @@ from .utils import (
     students_list_to_str,
     unique_flows_to_str,
 )
+from ..database.crud import (
+    get_all_students_with_flows,
+    save_students,
+)
 
 
 router = Router()
@@ -100,6 +104,17 @@ async def teacher_students_menu(message: Message,
     elif message.text == BT.ADD_STUDENTS:
         await state.set_state(Teacher.add_students_menu_st)
         await teacher_add_students_menu(message, state, is_init=True)
+    
+    elif message.text == BT.STUDENTS_LIST:
+        students = await get_all_students_with_flows()
+        await message.answer(
+            "Список студентов:"
+        )
+        await message.answer(
+            students_list_to_str(students)
+        )
+        await state.set_state(Teacher.students_menu_st)
+        await teacher_students_menu(message, state, is_init=True)
     
     else:
         await message.answer(
@@ -199,15 +214,26 @@ async def teacher_confirm_students_csv_input(message: Message,
         )
     
     elif message.text == BT.NO:
-        await message.answer(
-            "Отмена сохранения данных из CSV-файла."
-        )
         await state.update_data({
             FSMKeys.STUDENTS: None
         })
+        await message.answer(
+            "Отмена сохранения данных из CSV-файла."
+        )
         await state.set_state(Teacher.add_students_menu_st)
         await teacher_add_students_menu(message, state, is_init=True)
     
+    elif message.text == BT.YES:
+        await save_students(students)
+        await state.update_data({
+            FSMKeys.STUDENTS: None
+        })
+        await message.answer(
+            "Данные сохранены."
+        )
+        await state.set_state(Teacher.add_students_menu_st)
+        await teacher_add_students_menu(message, state, is_init=True)
+
     else:
         await message.answer(
             "Команда не распознана. Сохранить?",

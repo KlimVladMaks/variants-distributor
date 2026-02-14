@@ -76,6 +76,7 @@ class TeacherKeyboards:
         buttons = [
             [KeyboardButton(text=BT.ADD_STUDENTS)],
             [KeyboardButton(text=BT.DEL_STUDENTS)],
+            [KeyboardButton(text=BT.STUDENTS_LIST)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(

@@ -19,6 +19,7 @@ class ButtonText:
     CANCEL = "Отмена"
     YES = "Да"
     NO = "Нет"
+    STUDENTS_LIST = "Список студентов"
 
 
 @dataclass(frozen=True)

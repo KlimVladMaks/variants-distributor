@@ -21,7 +21,7 @@ class Student(Base):
     """Студент"""
     __tablename__ = 'students'
     id = Column(Integer, primary_key=True)
-    stream_id = Column(Integer, ForeignKey('flows.id'), nullable=False)
+    flow_id = Column(Integer, ForeignKey('flows.id'), nullable=False)
     isu = Column(String, nullable=False, unique=True)
     full_name = Column(String, nullable=False)
 
