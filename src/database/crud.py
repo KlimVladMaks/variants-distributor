@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.sql import join
 
-from .models import Flow, Student
+from .models import Flow, Student, Variant
 from .database import AsyncSession
 
 
@@ -41,5 +41,28 @@ async def get_all_students_with_flows():
             Student.full_name,
             Flow.title
         ).join(Flow, Student.flow_id == Flow.id)
+        result = await session.execute(query)
+        return result.all()
+
+
+async def save_variants(variants):
+    async with AsyncSession() as session:
+        for number, title, description in variants:
+            variant = Variant(
+                number=number,
+                title=title,
+                description=description
+            )
+            session.add(variant)
+        await session.commit()
+
+
+async def get_all_variants():
+    async with AsyncSession() as session:
+        query = select(
+            Variant.number,
+            Variant.title,
+            Variant.description
+        )
         result = await session.execute(query)
         return result.all()

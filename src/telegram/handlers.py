@@ -22,6 +22,8 @@ from .utils import (
 from ..database.crud import (
     get_all_students_with_flows,
     save_students,
+    save_variants,
+    get_all_variants,
 )
 
 
@@ -267,6 +269,15 @@ async def teacher_variants_menu(message: Message,
         await state.set_state(Teacher.add_variants_menu_st)
         await teacher_add_variants_menu(message, state, is_init=True)
     
+    elif message.text == BT.VARIANTS_LIST:
+        await message.answer("Список вариантов:")
+        variants = await get_all_variants()
+        for number, title, description in variants:
+            await message.answer(
+                str(number) + "\n\n" + title + "\n\n" + description
+            )
+        await teacher_variants_menu(message, state, is_init=True)
+
     else:
         await message.answer(
             "Команда не распознана. Выберите интересующий вас раздел:",
@@ -348,9 +359,9 @@ async def teacher_confirm_variants_csv_input(message: Message,
         await message.answer(
             "Удалось распознать следующие варианты:"
         )
-        for variant in variants:
+        for number, title, description in variants:
             await message.answer(
-                variant[0] + "\n\n" + variant[1] + "\n\n" + variant[2]
+                str(number) + "\n\n" + title + "\n\n" + description
             )
         await message.answer(
             "Сохранить?",
@@ -365,6 +376,13 @@ async def teacher_confirm_variants_csv_input(message: Message,
         await state.set_state(Teacher.add_variants_menu_st)
         await teacher_add_variants_menu(message, state, is_init=True)
     
+    elif message.text == BT.YES:
+        await save_variants(variants)
+        await state.update_data({FSMKeys.VARIANTS: None})
+        await message.answer("Данные сохранены.")
+        await state.set_state(Teacher.add_variants_menu_st)
+        await teacher_add_variants_menu(message, state, is_init=True)
+
     else:
         await message.answer(
             "Команда не распознана. Сохранить?",

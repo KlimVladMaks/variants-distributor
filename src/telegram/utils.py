@@ -98,6 +98,6 @@ def parse_variants_csv(file_content: bytes):
     for row in reader:
         strip_row = [cell.strip() for cell in row]
         number, title, description = strip_row[:3]
-        variants.append((number, title, description))
+        variants.append((int(number), title, description))
     
     return variants

@@ -21,6 +21,7 @@ class ButtonText:
     NO = "Нет"
     STUDENTS_LIST = "Список студентов"
     ADD_VARIANTS = "Добавить варианты"
+    VARIANTS_LIST = "Список вариантов"
 
 
 @dataclass(frozen=True)

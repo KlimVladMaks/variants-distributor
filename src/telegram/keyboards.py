@@ -99,6 +99,7 @@ class TeacherKeyboards:
     def variants_menu_kb():
         buttons = [
             [KeyboardButton(text=BT.ADD_VARIANTS)],
+            [KeyboardButton(text=BT.VARIANTS_LIST)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(
