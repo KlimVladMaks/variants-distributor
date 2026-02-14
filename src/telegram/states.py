@@ -17,3 +17,4 @@ class Teacher(StatesGroup):
     variants_menu_st = State()
     add_variants_menu_st = State()
     add_variants_via_csv_st = State()
+    confirm_variants_csv_input_st = State()

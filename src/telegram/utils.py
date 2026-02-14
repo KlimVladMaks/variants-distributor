@@ -25,10 +25,15 @@ def parse_students_csv(file_content: bytes):
     """
     csv_text = file_content.decode('utf-8-sig')
     csv_file = StringIO(csv_text)
-    reader = csv.reader(csv_file, delimiter=',')
 
-    # Пропускаем заголовки
-    next(reader)
+    # Определяем тип CSV-разделителя
+    first_line = csv_file.readline()
+    if ';' in first_line:
+        delimiter = ';'
+    else:
+        delimiter = ','
+    
+    reader = csv.reader(csv_file, delimiter=delimiter)
 
     students = []
     for row in reader:
@@ -74,3 +79,25 @@ def unique_flows_to_str(students):
     for student in students:
         unique_flows[student[2]] = None
     return "\n".join(unique_flows.keys())
+
+
+def parse_variants_csv(file_content: bytes):
+    csv_text = file_content.decode('utf-8-sig')
+    csv_file = StringIO(csv_text)
+    
+    # Определяем тип CSV-разделителя
+    first_line = csv_file.readline()
+    if ';' in first_line:
+        delimiter = ';'
+    else:
+        delimiter = ','
+    
+    reader = csv.reader(csv_file, delimiter=delimiter)
+
+    variants = []
+    for row in reader:
+        strip_row = [cell.strip() for cell in row]
+        title, description = strip_row[:2]
+        variants.append((title, description))
+    
+    return variants

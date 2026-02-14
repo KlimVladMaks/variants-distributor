@@ -27,3 +27,4 @@ class ButtonText:
 class FSMKeys:
     """Ключи для хранения данных в """
     STUDENTS = "students"
+    VARIANTS = "variants"
