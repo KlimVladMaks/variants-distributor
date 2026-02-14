@@ -96,6 +96,26 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
 
+    def variants_menu_kb():
+        buttons = [
+            [KeyboardButton(text=BT.ADD_VARIANTS)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+    def add_variants_menu_kb():
+        buttons = [
+            [KeyboardButton(text=BT.CSV)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
 
 class StudentKeyboards:
     """Клавиатуры для раздела 'Студент'"""

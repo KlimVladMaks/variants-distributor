@@ -32,6 +32,7 @@ router = Router()
 # ============================
 
 
+# Авторизация
 @router.message(StateFilter(Teacher.auth_st))
 async def teacher_auth(message: Message, state: FSMContext, is_init=False):
     """Авторизация преподавателя"""
@@ -59,6 +60,7 @@ async def teacher_auth(message: Message, state: FSMContext, is_init=False):
             )
 
 
+# Главное меню
 @router.message(StateFilter(Teacher.main_menu_st))
 async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
     """Главное меню преподавателя"""
@@ -79,6 +81,10 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         await state.set_state(Teacher.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
+    elif message.text == BT.VARIANTS:
+        await state.set_state(Teacher.variants_menu_st)
+        await teacher_variants_menu(message, state, is_init=True)
+
     else:
         await message.answer(
             "Команда не распознана. Выберите интересующий вас раздел:",
@@ -86,6 +92,7 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         )
 
 
+# Студенты и потоки
 @router.message(StateFilter(Teacher.students_menu_st))
 async def teacher_students_menu(message: Message, 
                                 state: FSMContext, 
@@ -123,6 +130,7 @@ async def teacher_students_menu(message: Message,
         )
 
 
+# Добавить студентов
 @router.message(StateFilter(Teacher.add_students_menu_st))
 async def teacher_add_students_menu(message: Message, 
                                     state: FSMContext, 
@@ -149,6 +157,7 @@ async def teacher_add_students_menu(message: Message,
         )
 
 
+# Добавить студентов через CSV
 @router.message(StateFilter(Teacher.add_students_via_csv_st))
 async def teacher_add_students_via_csv(message: Message, 
                                        state: FSMContext, 
@@ -188,6 +197,7 @@ async def teacher_add_students_via_csv(message: Message,
         )
 
 
+# Подтвердить добавление студентов через CSV
 @router.message(StateFilter(Teacher.confirm_students_csv_input_st))
 async def teacher_confirm_students_csv_input(message: Message, 
                                              state: FSMContext,
@@ -238,6 +248,80 @@ async def teacher_confirm_students_csv_input(message: Message,
         await message.answer(
             "Команда не распознана. Сохранить?",
             reply_markup=CK.yes_or_no_kb()
+        )
+
+
+# Варианты
+@router.message(StateFilter(Teacher.variants_menu_st))
+async def teacher_variants_menu(message: Message, 
+                                state: FSMContext, 
+                                is_init=False):
+    if is_init:
+        await message.answer(
+            "Варианты. Выберите интересующий вас раздел:",
+            reply_markup=TK.variants_menu_kb()
+        )
+    
+    elif message.text == BT.BACK:
+        await state.set_state(Teacher.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    
+    elif message.text == BT.ADD_VARIANTS:
+        await state.set_state(Teacher.add_variants_menu_st)
+        await teacher_add_variants_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Команда не распознана. Выберите интересующий вас раздел:",
+            reply_markup=TK.variants_menu_kb()
+        )
+
+
+# Добавить варианты
+@router.message(StateFilter(Teacher.add_variants_menu_st))
+async def teacher_add_variants_menu(message: Message, 
+                                    state: FSMContext, 
+                                    is_init=False):
+    if is_init:
+        await message.answer(
+            "Добавление вариантов. Выберите способ добавления:",
+            reply_markup=TK.add_variants_menu_kb()
+        )
+    
+    elif message.text == BT.BACK:
+        await state.set_state(Teacher.variants_menu_st)
+        await teacher_variants_menu(message, state, is_init=True)
+    
+    elif message.text == BT.CSV:
+        await state.set_state(Teacher.add_variants_via_csv_st)
+        await teacher_add_variants_via_csv(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Команда не распознана. Выберите способ добавления вариантов:",
+            reply_markup=TK.add_variants_menu_kb()
+        )
+
+
+# Добавить варианты через CSV
+@router.message(StateFilter(Teacher.add_variants_via_csv_st))
+async def teacher_add_variants_via_csv(message: Message, 
+                                       state: FSMContext, 
+                                       is_init=False):
+    if is_init:
+        await message.answer(
+            "Загрузите CSV-файл с вариантами:",
+            reply_markup=CK.cancel_kb()
+        )
+    
+    elif message.text == BT.CANCEL:
+        await state.set_state(Teacher.add_variants_menu_st)
+        await teacher_add_variants_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Команда не распознана. Загрузите CSV-файл:",
+            reply_markup=CK.cancel_kb()
         )
 
 

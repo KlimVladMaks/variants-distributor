@@ -20,6 +20,7 @@ class ButtonText:
     YES = "Да"
     NO = "Нет"
     STUDENTS_LIST = "Список студентов"
+    ADD_VARIANTS = "Добавить варианты"
 
 
 @dataclass(frozen=True)
