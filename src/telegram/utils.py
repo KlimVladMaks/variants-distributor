@@ -97,7 +97,7 @@ def parse_variants_csv(file_content: bytes):
     variants = []
     for row in reader:
         strip_row = [cell.strip() for cell in row]
-        title, description = strip_row[:2]
-        variants.append((title, description))
+        number, title, description = strip_row[:3]
+        variants.append((number, title, description))
     
     return variants

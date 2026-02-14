@@ -348,9 +348,9 @@ async def teacher_confirm_variants_csv_input(message: Message,
         await message.answer(
             "Удалось распознать следующие варианты:"
         )
-        for i, variant in enumerate(variants):
+        for variant in variants:
             await message.answer(
-                f"[{i + 1}]\n\n" + variant[0] + "\n\n" + variant[1]
+                variant[0] + "\n\n" + variant[1] + "\n\n" + variant[2]
             )
         await message.answer(
             "Сохранить?",

@@ -30,6 +30,7 @@ class Variant(Base):
     """Вариант"""
     __tablename__ = 'variants'
     id = Column(Integer, primary_key=True)
+    number = Column(Integer, nullable=False, unique=True)
     title = Column(String, nullable=False, unique=True)
     description = Column(String, nullable=False, unique=True)
 
