@@ -118,13 +118,16 @@ async def teacher_students_menu(message: Message,
     
     elif message.text == BT.VIEW_STUDENTS:
         students = await get_all_students_with_flows()
-        await message.answer(
-            "Список студентов по потокам:"
-        )
-        students_by_flows = format_students_by_flows(students)
-        for flow, students_str in students_by_flows:
-            await message.answer(flow + ":")
-            await message.answer(students_str)
+        if not students:
+            await message.answer("Нет студентов.")
+        else:
+            await message.answer(
+                "Список студентов по потокам:"
+            )
+            students_by_flows = format_students_by_flows(students)
+            for flow, students_str in students_by_flows:
+                await message.answer(flow + ":")
+                await message.answer(students_str)
         await state.set_state(Teacher.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
@@ -198,14 +201,19 @@ async def confirm_update_students_via_csv(message: Message,
     students = (await state.get_data())[FSMKeys.STUDENTS]
 
     if is_init:
-        await message.answer("Будут внесены следующие обновления:")
         update_students_info = await get_update_students_info(students)
-        for info in update_students_info:
-            await message.answer(info)
-        await message.answer(
-            "Сохранить обновления?",
-            reply_markup=CK.yes_or_no_kb()
-        )
+        if not update_students_info:
+            await message.answer("Обновлений не найдено.")
+            await state.set_state(Teacher.update_students_menu_st)
+            await teacher_update_students_menu(message, state, is_init=True)
+        else:
+            await message.answer("Будут внесены следующие обновления:")
+            for info in update_students_info:
+                await message.answer(info)
+            await message.answer(
+                "Сохранить обновления?",
+                reply_markup=CK.yes_or_no_kb()
+            )
     
     elif message.text == BT.NO:
         await state.update_data({FSMKeys.STUDENTS: None})
