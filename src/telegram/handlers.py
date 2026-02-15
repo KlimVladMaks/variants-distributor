@@ -14,16 +14,17 @@ from .constants import (
 from .states import Common, Teacher
 from ..config import TG_TEACHER_PASSWORD
 from .utils import (
-    parse_students_csv, 
-    students_list_to_str,
-    unique_flows_to_str,
+    parse_students_csv,
     parse_variants_csv,
+    format_students_by_flows,
 )
 from ..database.crud import (
     get_all_students_with_flows,
-    save_students,
+    get_update_students_info,
+    update_students,
     save_variants,
     get_all_variants,
+
 )
 
 
@@ -111,18 +112,19 @@ async def teacher_students_menu(message: Message,
         await state.set_state(Teacher.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
 
-    elif message.text == BT.ADD_STUDENTS:
-        await state.set_state(Teacher.add_students_menu_st)
-        await teacher_add_students_menu(message, state, is_init=True)
+    elif message.text == BT.UPDATE_STUDENTS:
+        await state.set_state(Teacher.update_students_st)
+        await teacher_update_students(message, state, is_init=True)
     
-    elif message.text == BT.STUDENTS_LIST:
+    elif message.text == BT.VIEW_STUDENTS:
         students = await get_all_students_with_flows()
         await message.answer(
-            "Список студентов:"
+            "Список студентов по потокам:"
         )
-        await message.answer(
-            students_list_to_str(students)
-        )
+        students_by_flows = format_students_by_flows()
+        for flow, students_str in students_by_flows:
+            await message.answer(flow + ":")
+            await message.answer(students_str)
         await state.set_state(Teacher.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
@@ -133,6 +135,66 @@ async def teacher_students_menu(message: Message,
         )
 
 
+# Обновить список студентов
+@router.message(StateFilter(Teacher.update_students_st))
+async def teacher_update_students(message: Message, 
+                                  state: FSMContext, 
+                                  is_init=False):
+    if is_init:
+        await message.answer(
+            "Обновление списка студентов. " \
+            "Загрузите обновлённый список студентов в формате CSV-файла:",
+            reply_markup=CK.cancel_kb()
+        )
+    
+    elif message.text == BT.CANCEL:
+        await state.set_state(Teacher.students_menu_st)
+        await teacher_students_menu(message, state, is_init=True)
+    
+    elif message.document:
+        status_message = await message.answer("Обработка файла...")
+        document: Document = message.document
+        file = await message.bot.get_file(document.file_id)
+        file_content = await message.bot.download_file(file.file_path)
+        students = parse_students_csv(file_content.read())
+        await status_message.edit_text("Файл обработан.")
+        await state.update_data({
+            FSMKeys.STUDENTS: students
+        })
+        await state.set_state(Teacher.confirm_update_students_st)
+        await confirm_update_students(message, state, is_init=True)
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await teacher_update_students(message, state, is_init=True)
+
+
+# Подтверждение обновления списка студентов
+@router.message(StateFilter(Teacher.confirm_update_students_st))
+async def confirm_update_students(message: Message, 
+                                  state: FSMContext, 
+                                  is_init=False):
+    students = (await state.get_data())[FSMKeys.STUDENTS]
+
+    if is_init:
+        await message.answer("Будут внесены следующие обновления:")
+        update_students_info = await get_update_students_info(students)
+        for info in update_students_info:
+            await message.answer(info)
+        await message.answer(
+            "Сохранить обновления?",
+            reply_markup=CK.yes_or_no_kb()
+        )
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await message.answer(
+            "Сохранить обновления?",
+            reply_markup=CK.yes_or_no_kb()
+        )
+
+
+'''
 # Добавить студентов
 @router.message(StateFilter(Teacher.add_students_menu_st))
 async def teacher_add_students_menu(message: Message, 
@@ -158,8 +220,10 @@ async def teacher_add_students_menu(message: Message,
             "Команда не распознана. Как вы хотите добавить студентов?",
             reply_markup=TK.add_students_menu_kb()
         )
+'''
 
 
+'''
 # Добавить студентов через CSV
 @router.message(StateFilter(Teacher.add_students_via_csv_st))
 async def teacher_add_students_via_csv(message: Message, 
@@ -198,8 +262,10 @@ async def teacher_add_students_via_csv(message: Message,
             "Загрузите CSV-файл со студентами или отмените операцию.",
             reply_markup=CK.cancel_kb()
         )
+'''
 
 
+'''
 # Подтвердить добавление студентов через CSV
 @router.message(StateFilter(Teacher.confirm_students_csv_input_st))
 async def teacher_confirm_students_csv_input(message: Message, 
@@ -248,7 +314,7 @@ async def teacher_confirm_students_csv_input(message: Message,
             "Команда не распознана. Сохранить?",
             reply_markup=CK.yes_or_no_kb()
         )
-
+'''
 
 # Варианты
 @router.message(StateFilter(Teacher.variants_menu_st))
@@ -265,11 +331,11 @@ async def teacher_variants_menu(message: Message,
         await state.set_state(Teacher.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
     
-    elif message.text == BT.ADD_VARIANTS:
+    elif message.text == BT.UPDATE_VARIANTS:
         await state.set_state(Teacher.add_variants_menu_st)
         await teacher_add_variants_menu(message, state, is_init=True)
     
-    elif message.text == BT.VARIANTS_LIST:
+    elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список вариантов:")
         variants = await get_all_variants()
         for number, title, description in variants:

@@ -11,17 +11,16 @@ class ButtonText:
     VARIANTS = "Варианты"
     STATS = "Статистика"
     EXIT = "Выход"
-    ADD_STUDENTS = "Добавить студентов"
-    DEL_STUDENTS = "Удалить студентов"
+    UPDATE_STUDENTS = "Обновить список студентов"
     CSV = "CSV"
     MANUALLY = "Вручную"
     START = "/start"
     CANCEL = "Отмена"
     YES = "Да"
     NO = "Нет"
-    STUDENTS_LIST = "Список студентов"
-    ADD_VARIANTS = "Добавить варианты"
-    VARIANTS_LIST = "Список вариантов"
+    VIEW_STUDENTS = "Посмотреть список студентов"
+    UPDATE_VARIANTS = "Обновить список вариантов"
+    VIEW_VARIANTS = "Посмотреть список вариантов"
 
 
 @dataclass(frozen=True)

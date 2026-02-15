@@ -74,21 +74,8 @@ class TeacherKeyboards:
     def students_menu_kb():
         """Раздел со студентами и потоками"""
         buttons = [
-            [KeyboardButton(text=BT.ADD_STUDENTS)],
-            [KeyboardButton(text=BT.DEL_STUDENTS)],
-            [KeyboardButton(text=BT.STUDENTS_LIST)],
-            [KeyboardButton(text=BT.BACK)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-    
-    def add_students_menu_kb():
-        """Опция добавления студентов"""
-        buttons = [
-            [KeyboardButton(text=BT.CSV)],
-            [KeyboardButton(text=BT.MANUALLY)],
+            [KeyboardButton(text=BT.UPDATE_STUDENTS)],
+            [KeyboardButton(text=BT.VIEW_STUDENTS)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(
@@ -98,8 +85,8 @@ class TeacherKeyboards:
 
     def variants_menu_kb():
         buttons = [
-            [KeyboardButton(text=BT.ADD_VARIANTS)],
-            [KeyboardButton(text=BT.VARIANTS_LIST)],
+            [KeyboardButton(text=BT.UPDATE_VARIANTS)],
+            [KeyboardButton(text=BT.VIEW_VARIANTS)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(

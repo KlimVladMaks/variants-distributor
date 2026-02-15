@@ -1,4 +1,4 @@
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (
     Column,
     Integer,
@@ -16,6 +16,8 @@ class Flow(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
 
+    students = relationship("Student", back_populates="flow")
+
 
 class Student(Base):
     """Студент"""
@@ -24,6 +26,8 @@ class Student(Base):
     flow_id = Column(Integer, ForeignKey('flows.id'), nullable=False)
     isu = Column(String, nullable=False, unique=True)
     full_name = Column(String, nullable=False)
+
+    flow = relationship("Flow", back_populates="students")
 
 
 class Variant(Base):
