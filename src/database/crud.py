@@ -93,19 +93,29 @@ async def get_update_students_info(students):
 
         if students_to_add:
             block = "Будут добавлены студенты:\n\n"
-            for isu, full_name, flow_title in sorted(students_to_add):
+            for isu, full_name, flow_title in sorted(
+                students_to_add,
+                key=lambda x: x[1]
+            ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
         
         if students_to_update:
             block = "Будут изменены данные студентов:\n\n"
-            for isu, old_name, old_flow, new_name, new_flow in sorted(students_to_update):
-                block += f"{isu}, ({old_name}, {old_flow} -> {new_name}, {new_flow})\n"
+            for isu, old_name, old_flow, new_name, new_flow in sorted(
+                students_to_update,
+                key=lambda x: x[3]
+            ):
+                block += f"{isu}, ({new_name}, {new_flow} <- " \
+                         f"{old_name}, {old_flow})\n"
             result.append(block.rstrip('\n'))
         
         if students_to_delete:
             block = "Будут удалены студенты:\n\n"
-            for isu, full_name, flow_title in sorted(students_to_delete):
+            for isu, full_name, flow_title in sorted(
+                students_to_delete,
+                key=lambda x: x[1]
+            ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
         
