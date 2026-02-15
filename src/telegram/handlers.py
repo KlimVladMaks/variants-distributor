@@ -21,7 +21,9 @@ from .utils import (
 from ..database.crud import (
     get_all_students_with_flows,
     get_update_students_info,
+    get_update_variants_info,
     update_students,
+    update_variants,
     get_all_variants,
 )
 
@@ -126,7 +128,6 @@ async def teacher_students_menu(message: Message,
             for flow, students_str in students_by_flows:
                 await message.answer(flow + ":")
                 await message.answer(students_str)
-        await state.set_state(Teacher.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
     else:
@@ -222,9 +223,7 @@ async def teacher_confirm_update_students_via_csv(message: Message,
     elif message.text == BT.YES:
         await update_students(students)
         await state.update_data({FSMKeys.STUDENTS: None})
-        await message.answer(
-            "Обновления сохранены."
-        )
+        await message.answer("Обновления сохранены.")
         await state.set_state(Teacher.update_students_menu_st)
         await teacher_update_students_menu(message, state, is_init=True)
     
@@ -258,10 +257,11 @@ async def teacher_variants_menu(message: Message,
     elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список вариантов:")
         variants = await get_all_variants()
-        for number, title, description in variants:
-            await message.answer(
-                str(number) + "\n\n" + title + "\n\n" + description
-            )
+        if not variants:
+            await message.answer("Нет вариантов")
+        else:
+            for number, title, description in variants:
+                await message.answer(f"№{number}. {title}\n\n{description}")
         await teacher_variants_menu(message, state, is_init=True)
 
     else:
@@ -283,8 +283,8 @@ async def teacher_update_variants_menu(message: Message,
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.students_menu_st)
-        await teacher_students_menu(message, state, is_init=True)
+        await state.set_state(Teacher.variants_menu_st)
+        await teacher_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.CSV:
         await state.set_state(Teacher.update_variants_via_csv_st)
@@ -292,7 +292,7 @@ async def teacher_update_variants_menu(message: Message,
     
     else:
         await message.answer("Не удалось распознать команду.")
-        await teacher_variants_menu(message, state, is_init=True)
+        await teacher_update_variants_menu(message, state, is_init=True)
 
 
 # Обновить список вариантов через CSV
@@ -317,7 +317,7 @@ async def teacher_update_variants_via_csv(message: Message,
         await state.update_data({
             FSMKeys.VARIANTS: variants
         })
-        await state.set_state(Teacher.confirm_update_variants_via_csv)
+        await state.set_state(Teacher.confirm_update_variants_via_csv_st)
         await teacher_confirm_update_variants_via_csv(message, 
                                                       state,  
                                                       is_init=True)
@@ -328,14 +328,46 @@ async def teacher_update_variants_via_csv(message: Message,
 
 
 # Подтвердить обновление списка вариантов через CSV
-@router.message(StateFilter(Teacher.update_variants_via_csv_st))
+@router.message(StateFilter(Teacher.confirm_update_variants_via_csv_st))
 async def teacher_confirm_update_variants_via_csv(message: Message, 
                                                   state: FSMContext, 
                                                   is_init=False):
     variants = (await state.get_data())[FSMKeys.VARIANTS]
 
     if is_init:
-        pass
+        update_variants_info = await get_update_variants_info(variants)
+        if not update_variants_info:
+            await message.answer("Обновлений не найдено.")
+            await state.set_state(Teacher.update_variants_menu_st)
+            await teacher_update_variants_menu(message, state, is_init=True)
+        else:
+            await message.answer("Будут внесены следующие обновления:")
+            for info in update_variants_info:
+                await message.answer(info)
+            await message.answer(
+                "Сохранить обновления?",
+                reply_markup=CK.yes_or_no_kb()
+            )
+    
+    elif message.text == BT.NO:
+        await state.update_data({FSMKeys.VARIANTS: None})
+        await message.answer("Отмена обновления данных.")
+        await state.set_state(Teacher.update_variants_menu_st)
+        await teacher_update_variants_menu(message, state, is_init=True)
+    
+    elif message.text == BT.YES:
+        await update_variants(variants)
+        await state.update_data({FSMKeys.VARIANTS: None})
+        await message.answer("Обновления сохранены.")
+        await state.set_state(Teacher.update_variants_menu_st)
+        await teacher_update_variants_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await message.answer(
+            "Сохранить обновления?",
+            reply_markup=CK.yes_or_no_kb()
+        )
 
 
 '''

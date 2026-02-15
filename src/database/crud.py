@@ -190,6 +190,68 @@ async def get_all_variants():
         return result.all()
 
 
+async def get_update_variants_info(variants):
+    async with AsyncSession() as session:
+        variants_result = await session.execute(select(Variant))
+        existing_variants = {
+            variant.number: variant 
+            for variant in variants_result.scalars().all()
+        }
+
+        processed_variant_numbers = set()
+
+        variants_to_add = set()
+        variants_to_update = set()
+        variants_to_delete = set()
+
+        for number, title, description in variants:
+            processed_variant_numbers.add(number)
+
+            variant = existing_variants.get(number)
+            if variant:
+                if (variant.title != title or
+                    variant.description != description):
+                    variants_to_update.add((
+                        variant.number,
+                        variant.title,
+                        variant.description,
+                        title,
+                        description
+                    ))
+            else:
+                variants_to_add.add((number, title, description))
+            
+        for number, variant in existing_variants.items():
+            if number not in processed_variant_numbers:
+                variants_to_delete.add(
+                    (number, variant.title, variant.description)
+                )
+        
+        result = []
+
+        if variants_to_add:
+            result.append("Будут добавлены варианты:")
+            for number, title, description in sorted(variants_to_add):
+                result.append(f"№{number}. {title}\n\n{description}")
+        
+        if variants_to_update:
+            result.append("Будут изменены варианты:")
+            for number, old_title, old_description, \
+                title, description in sorted(variants_to_update):
+                result.append(
+                    f'"""\n№{number}. {old_title}\n\n{old_description}\n"""' \
+                    f'\n\n⬇️\n\n' \
+                    f'"""\n№{number}. {title}\n\n{description}\n"""'
+                )
+        
+        if variants_to_delete:
+            result.append("Будут удалены варианты:")
+            for number, title, description in sorted(variants_to_delete):
+                result.append(f"№{number}. {title}\n\n{description}")
+        
+        return result
+
+
 async def update_variants(variants):
     async with AsyncSession() as session:
         variants_result = await session.execute(select(Variant))

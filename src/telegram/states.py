@@ -13,6 +13,7 @@ class Teacher(StatesGroup):
     students_menu_st = State()
     update_students_via_csv_st = State()
     confirm_update_students_via_csv_st = State()
+    confirm_update_variants_via_csv_st = State()
     variants_menu_st = State()
     update_students_menu_st = State()
     update_variants_menu_st = State()
