@@ -85,9 +85,9 @@ async def get_update_students_info(students):
                     (isu, student.full_name, student.flow.title)
                 )
         
-        for title in existing_flows.items():
+        for title, flow in existing_flows.items():
             if title not in processed_flow_titles:
-                flows_to_delete(flow_title)
+                flows_to_delete.add(title)
         
         result = []
 

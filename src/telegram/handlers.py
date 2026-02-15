@@ -113,15 +113,15 @@ async def teacher_students_menu(message: Message,
         await teacher_main_menu(message, state, is_init=True)
 
     elif message.text == BT.UPDATE_STUDENTS:
-        await state.set_state(Teacher.update_students_st)
-        await teacher_update_students(message, state, is_init=True)
+        await state.set_state(Teacher.update_students_menu_st)
+        await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.text == BT.VIEW_STUDENTS:
         students = await get_all_students_with_flows()
         await message.answer(
             "Список студентов по потокам:"
         )
-        students_by_flows = format_students_by_flows()
+        students_by_flows = format_students_by_flows(students)
         for flow, students_str in students_by_flows:
             await message.answer(flow + ":")
             await message.answer(students_str)
@@ -134,22 +134,45 @@ async def teacher_students_menu(message: Message,
             reply_markup=TK.students_menu_kb()
         )
 
-
-# Обновить список студентов
-@router.message(StateFilter(Teacher.update_students_st))
-async def teacher_update_students(message: Message, 
-                                  state: FSMContext, 
-                                  is_init=False):
+# Обновление списка студентов
+@router.message(StateFilter(Teacher.update_students_menu_st))
+async def teacher_update_students_menu(message: Message, 
+                                       state: FSMContext, 
+                                       is_init=False):
     if is_init:
         await message.answer(
-            "Обновление списка студентов. " \
+            "Обновление списка студентов. Выберите способ обновления:",
+            reply_markup=TK.update_students_menu_kb()
+        )
+    
+    elif message.text == BT.BACK:
+        await state.set_state(Teacher.students_menu_st)
+        await teacher_students_menu(message, state, is_init=True)
+    
+    elif message.text == BT.CSV:
+        await state.set_state(Teacher.update_students_via_csv_st)
+        await teacher_update_students_via_csv(message, state, is_init=True)
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await teacher_update_students_menu(message, state, is_init=True)
+
+
+# Обновить список студентов через CSV
+@router.message(StateFilter(Teacher.update_students_via_csv_st))
+async def teacher_update_students_via_csv(message: Message, 
+                                          state: FSMContext, 
+                                          is_init=False):
+    if is_init:
+        await message.answer(
+            "Обновление списка студентов через CSV. " \
             "Загрузите обновлённый список студентов в формате CSV-файла:",
             reply_markup=CK.cancel_kb()
         )
     
     elif message.text == BT.CANCEL:
-        await state.set_state(Teacher.students_menu_st)
-        await teacher_students_menu(message, state, is_init=True)
+        await state.set_state(Teacher.update_students_menu_st)
+        await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.document:
         status_message = await message.answer("Обработка файла...")
@@ -158,22 +181,20 @@ async def teacher_update_students(message: Message,
         file_content = await message.bot.download_file(file.file_path)
         students = parse_students_csv(file_content.read())
         await status_message.edit_text("Файл обработан.")
-        await state.update_data({
-            FSMKeys.STUDENTS: students
-        })
-        await state.set_state(Teacher.confirm_update_students_st)
-        await confirm_update_students(message, state, is_init=True)
+        await state.update_data({FSMKeys.STUDENTS: students})
+        await state.set_state(Teacher.confirm_update_students_via_csv_st)
+        await confirm_update_students_via_csv(message, state, is_init=True)
     
     else:
         await message.answer("Не удалось распознать команду.")
-        await teacher_update_students(message, state, is_init=True)
+        await teacher_update_students_via_csv(message, state, is_init=True)
 
 
-# Подтверждение обновления списка студентов
-@router.message(StateFilter(Teacher.confirm_update_students_st))
-async def confirm_update_students(message: Message, 
-                                  state: FSMContext, 
-                                  is_init=False):
+# Подтверждение обновления списка студентов через CSV
+@router.message(StateFilter(Teacher.confirm_update_students_via_csv_st))
+async def confirm_update_students_via_csv(message: Message, 
+                                          state: FSMContext, 
+                                          is_init=False):
     students = (await state.get_data())[FSMKeys.STUDENTS]
 
     if is_init:
@@ -186,6 +207,21 @@ async def confirm_update_students(message: Message,
             reply_markup=CK.yes_or_no_kb()
         )
     
+    elif message.text == BT.NO:
+        await state.update_data({FSMKeys.STUDENTS: None})
+        await message.answer("Отмена обновления данных.")
+        await state.set_state(Teacher.update_students_menu_st)
+        await teacher_update_students_menu(message, state, is_init=True)
+    
+    elif message.text == BT.YES:
+        await update_students(students)
+        await state.update_data({FSMKeys.STUDENTS: None})
+        await message.answer(
+            "Обновления сохранены."
+        )
+        await state.set_state(Teacher.update_students_menu_st)
+        await teacher_update_students_menu(message, state, is_init=True)
+    
     else:
         await message.answer("Не удалось распознать команду.")
         await message.answer(
@@ -193,128 +229,6 @@ async def confirm_update_students(message: Message,
             reply_markup=CK.yes_or_no_kb()
         )
 
-
-'''
-# Добавить студентов
-@router.message(StateFilter(Teacher.add_students_menu_st))
-async def teacher_add_students_menu(message: Message, 
-                                    state: FSMContext, 
-                                    is_init=False):
-    """Меню преподавателя 'Добавить студентов'"""
-    if is_init:
-        await message.answer(
-            "Добавление студентов. Выберите способ добавления:",
-            reply_markup=TK.add_students_menu_kb()
-        )
-    
-    elif message.text == BT.BACK:
-        await state.set_state(Teacher.students_menu_st)
-        await teacher_students_menu(message, state, is_init=True)
-    
-    elif message.text == BT.CSV:
-        await state.set_state(Teacher.add_students_via_csv_st)
-        await teacher_add_students_via_csv(message, state, is_init=True)
-
-    else:
-        await message.answer(
-            "Команда не распознана. Как вы хотите добавить студентов?",
-            reply_markup=TK.add_students_menu_kb()
-        )
-'''
-
-
-'''
-# Добавить студентов через CSV
-@router.message(StateFilter(Teacher.add_students_via_csv_st))
-async def teacher_add_students_via_csv(message: Message, 
-                                       state: FSMContext, 
-                                       is_init=False):
-    """Добавление студентов через CSV"""
-    if is_init:
-        await message.answer(
-            "Добавление студентов через CSV-файл. " \
-            "Загрузите CSV-файл со студентами:",
-            reply_markup=CK.cancel_kb()
-        )
-    
-    elif message.text == BT.CANCEL:
-        await state.set_state(Teacher.add_students_menu_st)
-        await teacher_add_students_menu(message, state, is_init=True)
-    
-    elif message.document:
-        status_message = await message.answer("Обработка файла...")
-        document: Document = message.document
-        file = await message.bot.get_file(document.file_id)
-        file_content = await message.bot.download_file(file.file_path)
-        students = parse_students_csv(file_content.read())
-        await status_message.edit_text("Файл обработан.")
-        await state.update_data({
-            FSMKeys.STUDENTS: students
-        })
-        await state.set_state(Teacher.confirm_students_csv_input_st)
-        await teacher_confirm_students_csv_input(message, 
-                                                 state,  
-                                                 is_init=True)
-        
-    else:
-        await message.answer(
-            "Ввод не распознан. " \
-            "Загрузите CSV-файл со студентами или отмените операцию.",
-            reply_markup=CK.cancel_kb()
-        )
-'''
-
-
-'''
-# Подтвердить добавление студентов через CSV
-@router.message(StateFilter(Teacher.confirm_students_csv_input_st))
-async def teacher_confirm_students_csv_input(message: Message, 
-                                             state: FSMContext,
-                                             is_init=False):
-    """Подтверждение ввода студентов из CSV-файла"""
-    students = (await state.get_data())[FSMKeys.STUDENTS]
-
-    if is_init:
-        await message.answer(
-            "Удалось распознать следующих студентов:"
-        )
-        await message.answer(
-            students_list_to_str(students)
-        )
-        await message.answer(
-            "Удалось распознать следующие потоки:"
-        )
-        await message.answer(
-            unique_flows_to_str(students)
-        )
-        await message.answer(
-            "Сохранить?",
-            reply_markup=CK.yes_or_no_kb()
-        )
-    
-    elif message.text == BT.NO:
-        await state.update_data({FSMKeys.STUDENTS: None})
-        await message.answer(
-            "Отмена сохранения данных из CSV-файла."
-        )
-        await state.set_state(Teacher.add_students_menu_st)
-        await teacher_add_students_menu(message, state, is_init=True)
-    
-    elif message.text == BT.YES:
-        await save_students(students)
-        await state.update_data({FSMKeys.STUDENTS: None})
-        await message.answer(
-            "Данные сохранены."
-        )
-        await state.set_state(Teacher.add_students_menu_st)
-        await teacher_add_students_menu(message, state, is_init=True)
-
-    else:
-        await message.answer(
-            "Команда не распознана. Сохранить?",
-            reply_markup=CK.yes_or_no_kb()
-        )
-'''
 
 # Варианты
 @router.message(StateFilter(Teacher.variants_menu_st))

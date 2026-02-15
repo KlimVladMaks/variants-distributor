@@ -83,6 +83,16 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
 
+    def update_students_menu_kb():
+        buttons = [
+            [KeyboardButton(text=BT.CSV)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
     def variants_menu_kb():
         buttons = [
             [KeyboardButton(text=BT.UPDATE_VARIANTS)],
