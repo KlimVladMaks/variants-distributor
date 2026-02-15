@@ -5,34 +5,6 @@ from .models import Flow, Student, Variant
 from .database import AsyncSession
 
 
-async def save_students(students):
-    """Сохранить студентов и их потоки в БД"""
-    async with AsyncSession() as session:
-        flows_cache = {}
-
-        for isu, full_name, flow_title in students:
-            if flow_title not in flows_cache:
-                query = select(Flow).where(Flow.title == flow_title)
-                result = await session.execute(query)
-                flow = result.scalar_one_or_none()
-
-                if not flow:
-                    flow = Flow(title=flow_title)
-                    session.add(flow)
-                    await session.flush()
-                
-                flows_cache[flow_title] = flow
-
-            student = Student(
-                isu=isu,
-                full_name=full_name,
-                flow_id=flows_cache[flow_title].id
-            )
-            session.add(student)
-        
-        await session.commit()
-
-
 async def get_update_students_info(students):
     async with AsyncSession() as session:
         flows_result = await session.execute(select(Flow))
@@ -157,9 +129,13 @@ async def update_students(students):
             if not flow:
                 flow = Flow(title=flow_title)
                 session.add(flow)
-                await session.flush()
                 existing_flows[flow_title] = flow
-            
+        
+        await session.flush()
+        
+        for isu, full_name, flow_title in students:
+            flow = existing_flows.get(flow_title)
+
             student = existing_students.get(isu)
             if student:
                 if (student.full_name != full_name or 
@@ -179,16 +155,14 @@ async def update_students(students):
             if isu not in processed_student_isus
         ]
         for student in students_to_delete:
-            await session.delete(student)
-        
-        await session.flush()
+            session.delete(student)
 
         flows_to_delete = [
             flow for title, flow in existing_flows.items()
             if title not in processed_flow_titles 
         ]
         for flow in flows_to_delete:
-            await session.delete(flow)
+            session.delete(flow)
         
         await session.commit()
 
@@ -205,18 +179,6 @@ async def get_all_students_with_flows():
         return result.all()
 
 
-async def save_variants(variants):
-    async with AsyncSession() as session:
-        for number, title, description in variants:
-            variant = Variant(
-                number=number,
-                title=title,
-                description=description
-            )
-            session.add(variant)
-        await session.commit()
-
-
 async def get_all_variants():
     async with AsyncSession() as session:
         query = select(
@@ -226,3 +188,40 @@ async def get_all_variants():
         )
         result = await session.execute(query)
         return result.all()
+
+
+async def update_variants(variants):
+    async with AsyncSession() as session:
+        variants_result = await session.execute(select(Variant))
+        existing_variants = {
+            variant.number: variant 
+            for variant in variants_result.scalars().all()
+        }
+
+        processed_variant_numbers = set()
+
+        for number, title, description in variants:
+            processed_variant_numbers.add(number)
+
+            variant = existing_variants.get(number)
+            if variant:
+                if (variant.title != title or
+                    variant.description != description):
+                    variant.title = title
+                    variant.description = description
+            else:
+                variant = Variant(
+                    number=number,
+                    title=title,
+                    description=description
+                )
+                session.add(variant)
+        
+        variants_to_delete = [
+            variant for number, variant in existing_variants.items()
+            if number not in processed_variant_numbers
+        ]
+        for variant in variants_to_delete:
+            session.delete(variant)
+        
+        await session.commit()

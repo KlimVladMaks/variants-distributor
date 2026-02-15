@@ -22,9 +22,7 @@ from ..database.crud import (
     get_all_students_with_flows,
     get_update_students_info,
     update_students,
-    save_variants,
     get_all_variants,
-
 )
 
 
@@ -186,7 +184,7 @@ async def teacher_update_students_via_csv(message: Message,
         await status_message.edit_text("Файл обработан.")
         await state.update_data({FSMKeys.STUDENTS: students})
         await state.set_state(Teacher.confirm_update_students_via_csv_st)
-        await confirm_update_students_via_csv(message, state, is_init=True)
+        await teacher_confirm_update_students_via_csv(message, state, is_init=True)
     
     else:
         await message.answer("Не удалось распознать команду.")
@@ -195,9 +193,9 @@ async def teacher_update_students_via_csv(message: Message,
 
 # Подтверждение обновления списка студентов через CSV
 @router.message(StateFilter(Teacher.confirm_update_students_via_csv_st))
-async def confirm_update_students_via_csv(message: Message, 
-                                          state: FSMContext, 
-                                          is_init=False):
+async def teacher_confirm_update_students_via_csv(message: Message, 
+                                                  state: FSMContext, 
+                                                  is_init=False):
     students = (await state.get_data())[FSMKeys.STUDENTS]
 
     if is_init:
@@ -254,8 +252,8 @@ async def teacher_variants_menu(message: Message,
         await teacher_main_menu(message, state, is_init=True)
     
     elif message.text == BT.UPDATE_VARIANTS:
-        await state.set_state(Teacher.add_variants_menu_st)
-        await teacher_add_variants_menu(message, state, is_init=True)
+        await state.set_state(Teacher.update_variants_menu_st)
+        await teacher_update_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список вариантов:")
@@ -273,6 +271,74 @@ async def teacher_variants_menu(message: Message,
         )
 
 
+# Обновить список вариантов
+@router.message(StateFilter(Teacher.update_variants_menu_st))
+async def teacher_update_variants_menu(message: Message, 
+                                       state: FSMContext, 
+                                       is_init=False):
+    if is_init:
+        await message.answer(
+            "Обновление вариантов. Выберите способ обновления:",
+            reply_markup=TK.update_variants_menu_kb()
+        )
+    
+    elif message.text == BT.BACK:
+        await state.set_state(Teacher.students_menu_st)
+        await teacher_students_menu(message, state, is_init=True)
+    
+    elif message.text == BT.CSV:
+        await state.set_state(Teacher.update_variants_via_csv_st)
+        await teacher_update_variants_via_csv(message, state, is_init=True)
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await teacher_variants_menu(message, state, is_init=True)
+
+
+# Обновить список вариантов через CSV
+@router.message(StateFilter(Teacher.update_variants_via_csv_st))
+async def teacher_update_variants_via_csv(message: Message, 
+                                          state: FSMContext, 
+                                          is_init=False):
+    if is_init:
+        await message.answer(
+            "Обновление списка вариантов через CSV. " \
+            "Загрузите обновлённый список вариантов в формате CSV-файла:",
+            reply_markup=CK.cancel_kb()
+        )
+    
+    elif message.document:
+        status_message = await message.answer("Обработка файла...")
+        document: Document = message.document
+        file = await message.bot.get_file(document.file_id)
+        file_content = await message.bot.download_file(file.file_path)
+        variants = parse_variants_csv(file_content.read())
+        await status_message.edit_text("Файл обработан.")
+        await state.update_data({
+            FSMKeys.VARIANTS: variants
+        })
+        await state.set_state(Teacher.confirm_update_variants_via_csv)
+        await teacher_confirm_update_variants_via_csv(message, 
+                                                      state,  
+                                                      is_init=True)
+
+    else:
+        await message.answer("Команда не распознана.")
+        await teacher_update_variants_via_csv(message, state, is_init=True)
+
+
+# Подтвердить обновление списка вариантов через CSV
+@router.message(StateFilter(Teacher.update_variants_via_csv_st))
+async def teacher_confirm_update_variants_via_csv(message: Message, 
+                                                  state: FSMContext, 
+                                                  is_init=False):
+    variants = (await state.get_data())[FSMKeys.VARIANTS]
+
+    if is_init:
+        pass
+
+
+'''
 # Добавить варианты
 @router.message(StateFilter(Teacher.add_variants_menu_st))
 async def teacher_add_variants_menu(message: Message, 
@@ -376,6 +442,7 @@ async def teacher_confirm_variants_csv_input(message: Message,
             "Команда не распознана. Сохранить?",
             reply_markup=CK.yes_or_no_kb()
         )
+'''
 
 
 # ===========================

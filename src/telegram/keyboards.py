@@ -104,7 +104,7 @@ class TeacherKeyboards:
             resize_keyboard=True
         )
 
-    def add_variants_menu_kb():
+    def update_variants_menu_kb():
         buttons = [
             [KeyboardButton(text=BT.CSV)],
             [KeyboardButton(text=BT.BACK)],
