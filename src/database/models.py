@@ -4,6 +4,7 @@ from sqlalchemy import (
     Integer,
     String,
     ForeignKey,
+    CheckConstraint,
 )
 
 
@@ -28,6 +29,8 @@ class Student(Base):
     full_name = Column(String, nullable=False)
 
     flow = relationship("Flow", back_populates="students")
+    distribution = relationship("Distribution", back_populates="student", 
+                                uselist=False)
 
 
 class Variant(Base):
@@ -37,6 +40,12 @@ class Variant(Base):
     number = Column(Integer, nullable=False, unique=True)
     title = Column(String, nullable=False, unique=True)
     description = Column(String, nullable=False, unique=True)
+
+    distributions = relationship("Distribution", back_populates="variant")
+
+    __table_args__ = (
+        CheckConstraint('number > 0', name='check_number_positive'),
+    )
 
 
 class Distribution(Base):
@@ -48,3 +57,6 @@ class Distribution(Base):
 
     # Если variant_id == NULL, значит студент выбрал опцию "Свой вариант"
     variant_id = Column(Integer, ForeignKey('variants.id'), nullable=True)
+
+    student = relationship("Student", back_populates="distribution")
+    variant = relationship("Variant", back_populates="distributions")

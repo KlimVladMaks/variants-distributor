@@ -32,6 +32,7 @@ from ..database.crud import (
     get_all_variants,
     get_student_by_isu,
     get_student_variant_number,
+    get_variants_info_for_student,
 )
 from ..database.models import Student
 
@@ -328,9 +329,7 @@ async def teacher_update_variants_via_csv(message: Message,
         file_content = await message.bot.download_file(file.file_path)
         variants = parse_variants_csv(file_content.read())
         await status_message.edit_text("Файл обработан.")
-        await state.update_data({
-            FSMKeys.VARIANTS: variants
-        })
+        await state.update_data({FSMKeys.VARIANTS: variants})
         await state.set_state(TS.confirm_update_variants_via_csv_st)
         await teacher_confirm_update_variants_via_csv(message, 
                                                       state,  
@@ -411,7 +410,7 @@ async def student_auth(message: Message, state: FSMContext, is_init=False):
                 "Повторите попытку или вернитесь назад."
             )
         else:
-            await state.set_data({FSMKeys.STUDENT: student})
+            await state.update_data({FSMKeys.STUDENT: student})
             await state.set_state(SS.confirm_auth_st)
             await student_confirm_auth(message, state, is_init=True)
 
@@ -430,7 +429,7 @@ async def student_confirm_auth(message: Message,
         )
     
     elif message.text == BT.NO:
-        await state.set_data({FSMKeys.STUDENT: None})
+        await state.update_data({FSMKeys.STUDENT: None})
         await message.answer("Возврат к вводу табельного номера.")
         await state.set_state(SS.auth_st)
         await student_auth(message, state, is_init=True)
@@ -439,18 +438,19 @@ async def student_confirm_auth(message: Message,
         student: Student = (await state.get_data())[FSMKeys.STUDENT]
         variant_number = await get_student_variant_number(student.isu)
         await message.answer(f"Здравствуйте, {student.full_name}!")
-        await state.set_data({FSMKeys.STUDENT: None})
-        await state.set_data({FSMKeys.ISU: student.isu})
-        await state.set_data({FSMKeys.VARIANT_NUMBER: variant_number})
+        await state.update_data({FSMKeys.STUDENT: None})
+        await state.update_data({FSMKeys.ISU: student.isu})
+        await state.update_data({FSMKeys.VARIANT_NUMBER: variant_number})
         await student_main_menu_router(message, state)
 
 
 async def student_main_menu_router(message: Message, state: FSMContext):
-    variant_number = (await state.get_data).get(FSMKeys.VARIANT_NUMBER)
+    variant_number = (await state.get_data()).get(FSMKeys.VARIANT_NUMBER)
     if variant_number:
         pass
     else:
-        pass
+        await state.set_state(SS.main_menu_without_variant_st)
+        await student_main_menu_without_variant(message, state, is_init=True)
 
 
 @router.message(StateFilter(SS.main_menu_without_variant_st))
@@ -485,7 +485,26 @@ async def student_choose_variant(message: Message,
                                  state: FSMContext, 
                                  is_init=False):
     if is_init:
-        await message.answer("Вам доступны следующие варианты:")
+        isu = (await state.get_data())[FSMKeys.ISU]
+        unavailable, available = await get_variants_info_for_student(isu)
+        await message.answer("Выбор вариантов.")
+        if unavailable:
+            await message.answer("Недоступные варианты:")
+            for msg in unavailable:
+                await message.answer(msg)
+        if available:
+            await message.answer("Доступные варианты:")
+            for msg in available:
+                await message.answer(msg)
+        await message.answer(
+            "Введите номер свободного варианта, чтобы выбрать его:",
+            reply_markup=CK.cancel_kb()
+        )
+    
+    elif message.text == BT.CANCEL:
+        await message.answer("Отмена выбора варианта.")
+        await state.set_state(SS.main_menu_without_variant_st)
+        await student_main_menu_without_variant(message, state, is_init=True)
 
 
 # ===========================

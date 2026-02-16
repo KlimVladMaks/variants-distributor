@@ -1,3 +1,4 @@
+from math import ceil
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.orm import (
@@ -334,3 +335,124 @@ async def get_student_variant_number(isu: str) -> Optional[int]:
         if distribution.variant_id is None:
             return -1
         return variant_number
+
+
+async def get_variants_info_for_student(isu: str):
+    async with AsyncSession() as session:
+        student = await session.execute(
+            select(Student)
+            .where(Student.isu == isu)
+            .options(selectinload(Student.flow))
+        )
+        student = student.scalar_one_or_none()
+
+        students = await session.execute(
+            select(Student)
+            .where(Student.flow_id == student.flow_id)
+            .options(selectinload(Student.distribution))
+        )
+        students = students.scalars().all()
+
+        variants = await session.execute(
+            select(Variant).order_by(Variant.number)
+        )
+        variants = variants.scalars().all()
+
+        total_students = len(students)
+        limit_per_variant = ceil(total_students / len(variants))
+
+        taken_counts = {v.id: 0 for v in variants}
+        for s in students:
+            if s.distribution and s.distribution.variant_id:
+                taken_counts[s.distribution.variant_id] += 1
+        
+        unavailable = []
+        available = []
+
+        for variant in variants:
+            taken = taken_counts[variant.id]
+            free = limit_per_variant - taken
+            is_available = free > 0
+
+            message = (
+                f"№{variant.number} {'✅' if is_available else '❌'}\n\n"
+                f"Свободных мест: {free}/{limit_per_variant}\n\n"
+                f"{variant.title}\n\n"
+                f"{variant.description}"
+            )
+
+            if is_available:
+                available.append(message)
+            else:
+                unavailable.append(message)
+
+        return unavailable, available
+
+
+async def update_student_variant(isu: str, variant_number: int):
+    pass
+
+
+# ===== Статистика =====
+
+
+async def get_variants_distribution_stats():
+    """
+    Возвращает статистику распределения вариантов по потокам.
+    
+    Формат возвращаемых данных:
+    {
+        "название_потока": [
+            (-1, число_выбравших_свой_вариант),
+            (номер_варианта, заголовок_варианта, число_взявших, лимит),
+            (номер_варианта, заголовок_варианта, число_взявших, лимит),
+            ...
+        ],
+        ...
+    }
+    """
+    async with AsyncSession() as session:
+        flows_query = await session.execute(
+            select(Flow).options(
+                selectinload(Flow.students).selectinload(Student.distribution)
+            ).order_by(Flow.title)
+        )
+        flows = flows_query.scalars().all()
+
+        variants_query = await session.execute(
+            select(Variant).order_by(Variant.number)
+        )
+        variants = variants_query.scalars().all()
+
+        result = {}
+
+        for flow in flows:
+            total_students = len(flow.students)
+            num_variants = len(variants)
+
+            limit_per_variant = ceil(total_students / num_variants)
+
+            variant_counts = {variant.id: 0 for variant in variants}
+            custom_variant_count = 0
+
+            for student in flow.students:
+                if student.distribution:
+                    if student.distribution.variant_id is None:
+                        custom_variant_count += 1
+                    else:
+                        variant_id = student.distribution.variant_id
+                        variant_counts[variant_id] += 1
+            
+            flow_stats = [(-1, custom_variant_count)]
+
+            for variant in variants:
+                flow_stats.append((
+                    variant.number,
+                    variant.title,
+                    variant_counts[variant.id],
+                    limit_per_variant
+                ))
+            
+            result[flow.title] = flow_stats
+        
+        return result
