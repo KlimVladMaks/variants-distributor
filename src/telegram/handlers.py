@@ -31,6 +31,7 @@ from ..database.crud import (
     update_variants,
     get_all_variants,
     get_student_by_isu,
+    get_student_variant_number,
 )
 from ..database.models import Student
 
@@ -388,6 +389,7 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
 # =============================
 
 
+# Авторизация студента
 @router.message(StateFilter(SS.auth_st))
 async def student_auth(message: Message, state: FSMContext, is_init=False):
     if is_init:
@@ -414,6 +416,7 @@ async def student_auth(message: Message, state: FSMContext, is_init=False):
             await student_confirm_auth(message, state, is_init=True)
 
 
+# Подтверждение авторизации студента
 @router.message(StateFilter(SS.confirm_auth_st))
 async def student_confirm_auth(message: Message, 
                                state: FSMContext, 
@@ -434,32 +437,55 @@ async def student_confirm_auth(message: Message,
     
     elif message.text == BT.YES:
         student: Student = (await state.get_data())[FSMKeys.STUDENT]
+        variant_number = await get_student_variant_number(student.isu)
         await message.answer(f"Здравствуйте, {student.full_name}!")
         await state.set_data({FSMKeys.STUDENT: None})
         await state.set_data({FSMKeys.ISU: student.isu})
-        await state.set_state(SS.main_menu_st)
-        await student_main_menu(message, state, is_init=True)
-    
+        await state.set_data({FSMKeys.VARIANT_NUMBER: variant_number})
+        await student_main_menu_router(message, state)
 
-@router.message(StateFilter(SS.main_menu_st))
-async def student_main_menu(message: Message, 
-                            state: FSMContext, 
-                            is_init=False):
+
+async def student_main_menu_router(message: Message, state: FSMContext):
+    variant_number = (await state.get_data).get(FSMKeys.VARIANT_NUMBER)
+    if variant_number:
+        pass
+    else:
+        pass
+
+
+@router.message(StateFilter(SS.main_menu_without_variant_st))
+async def student_main_menu_without_variant(message: Message, 
+                                            state: FSMContext, 
+                                            is_init=False):
     if is_init:
         await message.answer(
-            "Главное меню. Выберите интересующий вас раздел:",
-            reply_markup=SK.main_menu_kb()
+            "Главное меню.\n\nВы пока ещё выбрали вариант.\n\n" \
+            "Выберите интересующий вас раздел:",
+            reply_markup=SK.main_menu_without_variant_kb()
         )
     
     elif message.text == BT.EXIT:
         await message.answer("Выход из аккаунта студента.")
-        await state.set_data({FSMKeys.ISU: None})
+        await state.clear()
         await state.set_state(CS.choosing_role_st)
         await choosing_role(message, state, is_init=True)
+    
+    elif message.text == BT.CHOOSE_VARIANT:
+        await state.set_state(SS.choose_variant_st)
+        await student_choose_variant(message, state, is_init=True)
 
     else:
-        await message.answer("Не удалось распознать команду.")
-        await student_main_menu(message, state, is_init=True)
+        await message.answer(
+            "Не удалось распознать команду. Выберите интересующий вас раздел:"
+        )
+
+
+@router.message(StateFilter(SS.choose_variant_st))
+async def student_choose_variant(message: Message, 
+                                 state: FSMContext, 
+                                 is_init=False):
+    if is_init:
+        await message.answer("Вам доступны следующие варианты:")
 
 
 # ===========================

@@ -29,4 +29,5 @@ class Teacher(StatesGroup):
 class Student(StatesGroup):
     auth_st = State()
     confirm_auth_st = State()
-    main_menu_st = State()
+    main_menu_without_variant_st = State()
+    choose_variant_st = State()

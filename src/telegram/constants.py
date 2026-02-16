@@ -21,6 +21,7 @@ class ButtonText:
     VIEW_STUDENTS = "Посмотреть список студентов"
     UPDATE_VARIANTS = "Обновить список вариантов"
     VIEW_VARIANTS = "Посмотреть список вариантов"
+    CHOOSE_VARIANT = "Выбрать вариант"
 
 
 @dataclass(frozen=True)
@@ -30,3 +31,4 @@ class FSMKeys:
     VARIANTS = "variants"
     STUDENT = "student"
     ISU = "isu"
+    VARIANT_NUMBER = "variant_number"

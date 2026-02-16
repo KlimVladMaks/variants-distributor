@@ -117,8 +117,9 @@ class TeacherKeyboards:
 
 class StudentKeyboards:
     """Клавиатуры для раздела 'Студент'"""
-    def main_menu_kb():
+    def main_menu_without_variant_kb():
         buttons = [
+            [KeyboardButton(text=BT.CHOOSE_VARIANT)],
             [KeyboardButton(text=BT.EXIT)],
         ]
         return ReplyKeyboardMarkup(

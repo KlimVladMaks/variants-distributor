@@ -1,8 +1,17 @@
 from typing import Optional
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import (
+    selectinload, 
+    joinedload, 
+    outerjoin
+)
 
-from .models import Flow, Student, Variant
+from .models import (
+    Flow, 
+    Student, 
+    Variant, 
+    Distribution
+)
 from .database import AsyncSession
 
 
@@ -304,3 +313,24 @@ async def get_all_variants():
         )
         result = await session.execute(query)
         return result.all()
+
+
+# ===== Студенты и варианты =====
+
+
+async def get_student_variant_number(isu: str) -> Optional[int]:
+    async with AsyncSession() as session:
+        query = (
+            select(Distribution, Variant.number)
+            .join(Student, Student.id == Distribution.student_id)
+            .outerjoin(Variant, Variant.id == Distribution.variant_id)
+            .where(Student.isu == isu)
+        )
+        result = await session.execute(query)
+        row = result.first()
+        if row is None:
+            return None
+        distribution, variant_number = row
+        if distribution.variant_id is None:
+            return -1
+        return variant_number

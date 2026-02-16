@@ -43,7 +43,8 @@ class Distribution(Base):
     """Распределение вариантов среди студентов"""
     __tablename__ = 'distributions'
     id = Column(Integer, primary_key=True)
-    student_id = Column(Integer, ForeignKey('students.id'), nullable=False)
+    student_id = Column(Integer, ForeignKey('students.id'), 
+                        nullable=False, unique=True)
 
     # Если variant_id == NULL, значит студент выбрал опцию "Свой вариант"
     variant_id = Column(Integer, ForeignKey('variants.id'), nullable=True)
