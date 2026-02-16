@@ -25,6 +25,8 @@ class ButtonText:
 
 @dataclass(frozen=True)
 class FSMKeys:
-    """Ключи для хранения данных в """
+    """Ключи для хранения данных в state"""
     STUDENTS = "students"
     VARIANTS = "variants"
+    STUDENT = "student"
+    ISU = "isu"

@@ -6,12 +6,17 @@ from aiogram.fsm.context import FSMContext
 from .keyboards import (
     CommonKeyboards as CK,
     TeacherKeyboards as TK,
+    StudentKeyboards as SK,
 )
 from .constants import (
     ButtonText as BT,
     FSMKeys
 )
-from .states import Common, Teacher
+from .states import (
+    Common as CS, 
+    Teacher as TS, 
+    Student as SS,
+)
 from ..config import TG_TEACHER_PASSWORD
 from .utils import (
     parse_students_csv,
@@ -25,7 +30,9 @@ from ..database.crud import (
     update_students,
     update_variants,
     get_all_variants,
+    get_student_by_isu,
 )
+from ..database.models import Student
 
 
 router = Router()
@@ -37,7 +44,7 @@ router = Router()
 
 
 # Авторизация
-@router.message(StateFilter(Teacher.auth_st))
+@router.message(StateFilter(TS.auth_st))
 async def teacher_auth(message: Message, state: FSMContext, is_init=False):
     """Авторизация преподавателя"""
     if is_init:
@@ -47,14 +54,14 @@ async def teacher_auth(message: Message, state: FSMContext, is_init=False):
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Common.choosing_role_st)
+        await state.set_state(CS.choosing_role_st)
         await choosing_role(message, state, is_init=True)
     
     else:
         password = message.text
 
         if password == TG_TEACHER_PASSWORD:
-            await state.set_state(Teacher.main_menu_st)
+            await state.set_state(TS.main_menu_st)
             await teacher_main_menu(message, state, is_init=True)
         
         else:
@@ -65,7 +72,7 @@ async def teacher_auth(message: Message, state: FSMContext, is_init=False):
 
 
 # Главное меню
-@router.message(StateFilter(Teacher.main_menu_st))
+@router.message(StateFilter(TS.main_menu_st))
 async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
     """Главное меню преподавателя"""
     if is_init:
@@ -78,15 +85,15 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         await message.answer(
             "Вы вышли из роли преподавателя."
         )
-        await state.set_state(Common.choosing_role_st)
+        await state.set_state(CS.choosing_role_st)
         await choosing_role(message, state, is_init=True)
     
     elif message.text == BT.STUDENTS_AND_FLOWS:
-        await state.set_state(Teacher.students_menu_st)
+        await state.set_state(TS.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
     elif message.text == BT.VARIANTS:
-        await state.set_state(Teacher.variants_menu_st)
+        await state.set_state(TS.variants_menu_st)
         await teacher_variants_menu(message, state, is_init=True)
 
     else:
@@ -96,8 +103,11 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         )
 
 
+# ===== Студенты и потоки =====
+
+
 # Студенты и потоки
-@router.message(StateFilter(Teacher.students_menu_st))
+@router.message(StateFilter(TS.students_menu_st))
 async def teacher_students_menu(message: Message, 
                                 state: FSMContext, 
                                 is_init=False):
@@ -109,11 +119,11 @@ async def teacher_students_menu(message: Message,
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.main_menu_st)
+        await state.set_state(TS.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
 
     elif message.text == BT.UPDATE_STUDENTS:
-        await state.set_state(Teacher.update_students_menu_st)
+        await state.set_state(TS.update_students_menu_st)
         await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.text == BT.VIEW_STUDENTS:
@@ -137,7 +147,7 @@ async def teacher_students_menu(message: Message,
         )
 
 # Обновление списка студентов
-@router.message(StateFilter(Teacher.update_students_menu_st))
+@router.message(StateFilter(TS.update_students_menu_st))
 async def teacher_update_students_menu(message: Message, 
                                        state: FSMContext, 
                                        is_init=False):
@@ -148,11 +158,11 @@ async def teacher_update_students_menu(message: Message,
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.students_menu_st)
+        await state.set_state(TS.students_menu_st)
         await teacher_students_menu(message, state, is_init=True)
     
     elif message.text == BT.CSV:
-        await state.set_state(Teacher.update_students_via_csv_st)
+        await state.set_state(TS.update_students_via_csv_st)
         await teacher_update_students_via_csv(message, state, is_init=True)
     
     else:
@@ -161,7 +171,7 @@ async def teacher_update_students_menu(message: Message,
 
 
 # Обновить список студентов через CSV
-@router.message(StateFilter(Teacher.update_students_via_csv_st))
+@router.message(StateFilter(TS.update_students_via_csv_st))
 async def teacher_update_students_via_csv(message: Message, 
                                           state: FSMContext, 
                                           is_init=False):
@@ -173,7 +183,7 @@ async def teacher_update_students_via_csv(message: Message,
         )
     
     elif message.text == BT.CANCEL:
-        await state.set_state(Teacher.update_students_menu_st)
+        await state.set_state(TS.update_students_menu_st)
         await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.document:
@@ -184,7 +194,7 @@ async def teacher_update_students_via_csv(message: Message,
         students = parse_students_csv(file_content.read())
         await status_message.edit_text("Файл обработан.")
         await state.update_data({FSMKeys.STUDENTS: students})
-        await state.set_state(Teacher.confirm_update_students_via_csv_st)
+        await state.set_state(TS.confirm_update_students_via_csv_st)
         await teacher_confirm_update_students_via_csv(message, state, is_init=True)
     
     else:
@@ -193,7 +203,7 @@ async def teacher_update_students_via_csv(message: Message,
 
 
 # Подтверждение обновления списка студентов через CSV
-@router.message(StateFilter(Teacher.confirm_update_students_via_csv_st))
+@router.message(StateFilter(TS.confirm_update_students_via_csv_st))
 async def teacher_confirm_update_students_via_csv(message: Message, 
                                                   state: FSMContext, 
                                                   is_init=False):
@@ -203,7 +213,7 @@ async def teacher_confirm_update_students_via_csv(message: Message,
         update_students_info = await get_update_students_info(students)
         if not update_students_info:
             await message.answer("Обновлений не найдено.")
-            await state.set_state(Teacher.update_students_menu_st)
+            await state.set_state(TS.update_students_menu_st)
             await teacher_update_students_menu(message, state, is_init=True)
         else:
             await message.answer("Будут внесены следующие обновления:")
@@ -217,14 +227,14 @@ async def teacher_confirm_update_students_via_csv(message: Message,
     elif message.text == BT.NO:
         await state.update_data({FSMKeys.STUDENTS: None})
         await message.answer("Отмена обновления данных.")
-        await state.set_state(Teacher.update_students_menu_st)
+        await state.set_state(TS.update_students_menu_st)
         await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.text == BT.YES:
         await update_students(students)
         await state.update_data({FSMKeys.STUDENTS: None})
         await message.answer("Обновления сохранены.")
-        await state.set_state(Teacher.update_students_menu_st)
+        await state.set_state(TS.update_students_menu_st)
         await teacher_update_students_menu(message, state, is_init=True)
     
     else:
@@ -235,8 +245,11 @@ async def teacher_confirm_update_students_via_csv(message: Message,
         )
 
 
+# ===== Варианты =====
+
+
 # Варианты
-@router.message(StateFilter(Teacher.variants_menu_st))
+@router.message(StateFilter(TS.variants_menu_st))
 async def teacher_variants_menu(message: Message, 
                                 state: FSMContext, 
                                 is_init=False):
@@ -247,11 +260,11 @@ async def teacher_variants_menu(message: Message,
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.main_menu_st)
+        await state.set_state(TS.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
     
     elif message.text == BT.UPDATE_VARIANTS:
-        await state.set_state(Teacher.update_variants_menu_st)
+        await state.set_state(TS.update_variants_menu_st)
         await teacher_update_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.VIEW_VARIANTS:
@@ -272,7 +285,7 @@ async def teacher_variants_menu(message: Message,
 
 
 # Обновить список вариантов
-@router.message(StateFilter(Teacher.update_variants_menu_st))
+@router.message(StateFilter(TS.update_variants_menu_st))
 async def teacher_update_variants_menu(message: Message, 
                                        state: FSMContext, 
                                        is_init=False):
@@ -283,11 +296,11 @@ async def teacher_update_variants_menu(message: Message,
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.variants_menu_st)
+        await state.set_state(TS.variants_menu_st)
         await teacher_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.CSV:
-        await state.set_state(Teacher.update_variants_via_csv_st)
+        await state.set_state(TS.update_variants_via_csv_st)
         await teacher_update_variants_via_csv(message, state, is_init=True)
     
     else:
@@ -296,7 +309,7 @@ async def teacher_update_variants_menu(message: Message,
 
 
 # Обновить список вариантов через CSV
-@router.message(StateFilter(Teacher.update_variants_via_csv_st))
+@router.message(StateFilter(TS.update_variants_via_csv_st))
 async def teacher_update_variants_via_csv(message: Message, 
                                           state: FSMContext, 
                                           is_init=False):
@@ -317,7 +330,7 @@ async def teacher_update_variants_via_csv(message: Message,
         await state.update_data({
             FSMKeys.VARIANTS: variants
         })
-        await state.set_state(Teacher.confirm_update_variants_via_csv_st)
+        await state.set_state(TS.confirm_update_variants_via_csv_st)
         await teacher_confirm_update_variants_via_csv(message, 
                                                       state,  
                                                       is_init=True)
@@ -328,7 +341,7 @@ async def teacher_update_variants_via_csv(message: Message,
 
 
 # Подтвердить обновление списка вариантов через CSV
-@router.message(StateFilter(Teacher.confirm_update_variants_via_csv_st))
+@router.message(StateFilter(TS.confirm_update_variants_via_csv_st))
 async def teacher_confirm_update_variants_via_csv(message: Message, 
                                                   state: FSMContext, 
                                                   is_init=False):
@@ -338,7 +351,7 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
         update_variants_info = await get_update_variants_info(variants)
         if not update_variants_info:
             await message.answer("Обновлений не найдено.")
-            await state.set_state(Teacher.update_variants_menu_st)
+            await state.set_state(TS.update_variants_menu_st)
             await teacher_update_variants_menu(message, state, is_init=True)
         else:
             await message.answer("Будут внесены следующие обновления:")
@@ -352,14 +365,14 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
     elif message.text == BT.NO:
         await state.update_data({FSMKeys.VARIANTS: None})
         await message.answer("Отмена обновления данных.")
-        await state.set_state(Teacher.update_variants_menu_st)
+        await state.set_state(TS.update_variants_menu_st)
         await teacher_update_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.YES:
         await update_variants(variants)
         await state.update_data({FSMKeys.VARIANTS: None})
         await message.answer("Обновления сохранены.")
-        await state.set_state(Teacher.update_variants_menu_st)
+        await state.set_state(TS.update_variants_menu_st)
         await teacher_update_variants_menu(message, state, is_init=True)
     
     else:
@@ -370,111 +383,83 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
         )
 
 
-'''
-# Добавить варианты
-@router.message(StateFilter(Teacher.add_variants_menu_st))
-async def teacher_add_variants_menu(message: Message, 
-                                    state: FSMContext, 
-                                    is_init=False):
+# =============================
+# ===== STUDENTS HANDLERS =====
+# =============================
+
+
+@router.message(StateFilter(SS.auth_st))
+async def student_auth(message: Message, state: FSMContext, is_init=False):
     if is_init:
         await message.answer(
-            "Добавление вариантов. Выберите способ добавления:",
-            reply_markup=TK.add_variants_menu_kb()
+            "Введите ваш табельный номер (6 цифр):",
+            reply_markup=CK.back_kb()
         )
     
     elif message.text == BT.BACK:
-        await state.set_state(Teacher.variants_menu_st)
-        await teacher_variants_menu(message, state, is_init=True)
-    
-    elif message.text == BT.CSV:
-        await state.set_state(Teacher.add_variants_via_csv_st)
-        await teacher_add_variants_via_csv(message, state, is_init=True)
+        await state.set_state(CS.choosing_role_st)
+        await choosing_role(message, state, is_init=True)
     
     else:
-        await message.answer(
-            "Команда не распознана. Выберите способ добавления вариантов:",
-            reply_markup=TK.add_variants_menu_kb()
-        )
-
-
-# Добавить варианты через CSV
-@router.message(StateFilter(Teacher.add_variants_via_csv_st))
-async def teacher_add_variants_via_csv(message: Message, 
-                                       state: FSMContext, 
-                                       is_init=False):
-    if is_init:
-        await message.answer(
-            "Загрузите CSV-файл с вариантами:",
-            reply_markup=CK.cancel_kb()
-        )
-    
-    elif message.text == BT.CANCEL:
-        await state.set_state(Teacher.add_variants_menu_st)
-        await teacher_add_variants_menu(message, state, is_init=True)
-    
-    elif message.document:
-        status_message = await message.answer("Обработка файла...")
-        document: Document = message.document
-        file = await message.bot.get_file(document.file_id)
-        file_content = await message.bot.download_file(file.file_path)
-        variants = parse_variants_csv(file_content.read())
-        await status_message.edit_text("Файл обработан.")
-        await state.update_data({
-            FSMKeys.VARIANTS: variants
-        })
-        await state.set_state(Teacher.confirm_variants_csv_input_st)
-        await teacher_confirm_variants_csv_input(message, 
-                                                 state,  
-                                                 is_init=True)
-    
-    else:
-        await message.answer(
-            "Команда не распознана. Загрузите CSV-файл:",
-            reply_markup=CK.cancel_kb()
-        )
-
-
-# Подтвердить добавление вариантов через CSV
-@router.message(StateFilter(Teacher.confirm_variants_csv_input_st))
-async def teacher_confirm_variants_csv_input(message: Message, 
-                                             state: FSMContext, 
-                                             is_init=False):
-    variants = (await state.get_data())[FSMKeys.VARIANTS]
-
-    if is_init:
-        await message.answer(
-            "Удалось распознать следующие варианты:"
-        )
-        for number, title, description in variants:
+        isu = message.text
+        student: Student = await get_student_by_isu(isu)
+        if not student:
             await message.answer(
-                str(number) + "\n\n" + title + "\n\n" + description
+                "Не удалось найти студента с данным табельным номером. " \
+                "Повторите попытку или вернитесь назад."
             )
+        else:
+            await state.set_data({FSMKeys.STUDENT: student})
+            await state.set_state(SS.confirm_auth_st)
+            await student_confirm_auth(message, state, is_init=True)
+
+
+@router.message(StateFilter(SS.confirm_auth_st))
+async def student_confirm_auth(message: Message, 
+                               state: FSMContext, 
+                               is_init=False):
+    if is_init:
+        student: Student = (await state.get_data())[FSMKeys.STUDENT]
         await message.answer(
-            "Сохранить?",
+            f"Это ваши данные?\n\n" \
+            f"{student.isu}, {student.full_name}, {student.flow.title}",
             reply_markup=CK.yes_or_no_kb()
         )
     
     elif message.text == BT.NO:
-        await message.answer(
-            "Отмена сохранения."
-        )
-        await state.update_data({FSMKeys.VARIANTS: None})
-        await state.set_state(Teacher.add_variants_menu_st)
-        await teacher_add_variants_menu(message, state, is_init=True)
+        await state.set_data({FSMKeys.STUDENT: None})
+        await message.answer("Возврат к вводу табельного номера.")
+        await state.set_state(SS.auth_st)
+        await student_auth(message, state, is_init=True)
     
     elif message.text == BT.YES:
-        await save_variants(variants)
-        await state.update_data({FSMKeys.VARIANTS: None})
-        await message.answer("Данные сохранены.")
-        await state.set_state(Teacher.add_variants_menu_st)
-        await teacher_add_variants_menu(message, state, is_init=True)
+        student: Student = (await state.get_data())[FSMKeys.STUDENT]
+        await message.answer(f"Здравствуйте, {student.full_name}!")
+        await state.set_data({FSMKeys.STUDENT: None})
+        await state.set_data({FSMKeys.ISU: student.isu})
+        await state.set_state(SS.main_menu_st)
+        await student_main_menu(message, state, is_init=True)
+    
+
+@router.message(StateFilter(SS.main_menu_st))
+async def student_main_menu(message: Message, 
+                            state: FSMContext, 
+                            is_init=False):
+    if is_init:
+        await message.answer(
+            "Главное меню. Выберите интересующий вас раздел:",
+            reply_markup=SK.main_menu_kb()
+        )
+    
+    elif message.text == BT.EXIT:
+        await message.answer("Выход из аккаунта студента.")
+        await state.set_data({FSMKeys.ISU: None})
+        await state.set_state(CS.choosing_role_st)
+        await choosing_role(message, state, is_init=True)
 
     else:
-        await message.answer(
-            "Команда не распознана. Сохранить?",
-            reply_markup=CK.yes_or_no_kb()
-        )
-'''
+        await message.answer("Не удалось распознать команду.")
+        await student_main_menu(message, state, is_init=True)
 
 
 # ===========================
@@ -482,7 +467,7 @@ async def teacher_confirm_variants_csv_input(message: Message,
 # ===========================
 
 
-@router.message(StateFilter(Common.choosing_role_st))
+@router.message(StateFilter(CS.choosing_role_st))
 async def choosing_role(message: Message, state: FSMContext, is_init=False):
     """Раздел с выбором роли пользователя"""
     if is_init:
@@ -492,13 +477,12 @@ async def choosing_role(message: Message, state: FSMContext, is_init=False):
         )
     
     elif message.text == BT.TEACHER:
-        await state.set_state(Teacher.auth_st)
+        await state.set_state(TS.auth_st)
         await teacher_auth(message, state, is_init=True)
     
     elif message.text == BT.STUDENT:
-        await message.answer(
-            "Данный раздел находится в разработке. Выберите другую роль:"
-        )
+        await state.set_state(SS.auth_st)
+        await student_auth(message, state, is_init=True)
     
     else:
         await message.answer(
@@ -510,7 +494,7 @@ async def choosing_role(message: Message, state: FSMContext, is_init=False):
 @router.message(CommandStart())
 async def start(message: Message, state: FSMContext):
     """Обработчик команды /start"""
-    await state.set_state(Common.choosing_role_st)
+    await state.set_state(CS.choosing_role_st)
     await choosing_role(message, state, is_init=True)
 
 

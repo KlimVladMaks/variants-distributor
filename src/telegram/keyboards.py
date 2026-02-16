@@ -117,7 +117,14 @@ class TeacherKeyboards:
 
 class StudentKeyboards:
     """Клавиатуры для раздела 'Студент'"""
-    pass
+    def main_menu_kb():
+        buttons = [
+            [KeyboardButton(text=BT.EXIT)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
 
 
 # Для удаления клавиатуры

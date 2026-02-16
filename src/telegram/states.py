@@ -10,11 +10,23 @@ class Teacher(StatesGroup):
     """Состояния пользователя с ролью 'Преподаватель'"""
     auth_st = State()
     main_menu_st = State()
+
+    # ===== Студенты и потоки =====
+
     students_menu_st = State()
+    update_students_menu_st = State()
     update_students_via_csv_st = State()
     confirm_update_students_via_csv_st = State()
-    confirm_update_variants_via_csv_st = State()
+
+    # ===== Варианты =====
+
     variants_menu_st = State()
-    update_students_menu_st = State()
     update_variants_menu_st = State()
     update_variants_via_csv_st = State()
+    confirm_update_variants_via_csv_st = State()
+
+
+class Student(StatesGroup):
+    auth_st = State()
+    confirm_auth_st = State()
+    main_menu_st = State()

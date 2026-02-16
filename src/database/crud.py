@@ -1,9 +1,12 @@
+from typing import Optional
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 from .models import Flow, Student, Variant
 from .database import AsyncSession
 
+
+# ===== Студенты =====
 
 async def get_update_students_info(students):
     async with AsyncSession() as session:
@@ -179,15 +182,18 @@ async def get_all_students_with_flows():
         return result.all()
 
 
-async def get_all_variants():
+async def get_student_by_isu(isu: str) -> Optional[Student]:
     async with AsyncSession() as session:
-        query = select(
-            Variant.number,
-            Variant.title,
-            Variant.description
+        query = (
+            select(Student)
+            .options(joinedload(Student.flow))
+            .where(Student.isu == isu)
         )
-        result = await session.execute(query)
-        return result.all()
+        student = await session.execute(query)
+        return student.scalar_one_or_none()
+
+
+# ===== Варианты =====
 
 
 async def get_update_variants_info(variants):
@@ -287,3 +293,14 @@ async def update_variants(variants):
             await session.delete(variant)
         
         await session.commit()
+
+
+async def get_all_variants():
+    async with AsyncSession() as session:
+        query = select(
+            Variant.number,
+            Variant.title,
+            Variant.description
+        )
+        result = await session.execute(query)
+        return result.all()
