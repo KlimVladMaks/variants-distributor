@@ -155,14 +155,14 @@ async def update_students(students):
             if isu not in processed_student_isus
         ]
         for student in students_to_delete:
-            session.delete(student)
+            await session.delete(student)
 
         flows_to_delete = [
             flow for title, flow in existing_flows.items()
             if title not in processed_flow_titles 
         ]
         for flow in flows_to_delete:
-            session.delete(flow)
+            await session.delete(flow)
         
         await session.commit()
 
@@ -284,6 +284,6 @@ async def update_variants(variants):
             if number not in processed_variant_numbers
         ]
         for variant in variants_to_delete:
-            session.delete(variant)
+            await session.delete(variant)
         
         await session.commit()
