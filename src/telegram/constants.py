@@ -24,6 +24,9 @@ class ButtonText:
     CHOOSE_VARIANT = "Выбрать вариант"
     CONFIRM = "Подтвердить"
     OWN_VARIANT = "Свой вариант"
+    VIEW_VARIANTS = "Посмотреть варианты"
+    CHANGE_VARIANT = "Выбрать другой вариант"
+    RESET_VARIANT = "Сбросить вариант"
 
 
 @dataclass(frozen=True)

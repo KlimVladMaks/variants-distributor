@@ -130,6 +130,7 @@ class StudentKeyboards:
     def main_menu_without_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.CHOOSE_VARIANT)],
+            [KeyboardButton(text=BT.VIEW_VARIANTS)],
             [KeyboardButton(text=BT.EXIT)],
         ]
         return ReplyKeyboardMarkup(
@@ -139,6 +140,9 @@ class StudentKeyboards:
 
     def main_menu_with_variant_kb():
         buttons = [
+            [KeyboardButton(text=BT.CHANGE_VARIANT)],
+            [KeyboardButton(text=BT.RESET_VARIANT)],
+            [KeyboardButton(text=BT.VIEW_VARIANTS)],
             [KeyboardButton(text=BT.EXIT)],
         ]
         return ReplyKeyboardMarkup(
@@ -146,7 +150,7 @@ class StudentKeyboards:
             resize_keyboard=True
         )
 
-    def choose_variant_kb():
+    def update_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.OWN_VARIANT)],
             [KeyboardButton(text=BT.CANCEL)],

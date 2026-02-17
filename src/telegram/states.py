@@ -30,6 +30,7 @@ class Student(StatesGroup):
     auth_st = State()
     confirm_auth_st = State()
     main_menu_without_variant_st = State()
-    choose_variant_st = State()
+    update_variant_st = State()
     confirm_choose_variant_st = State()
     main_menu_with_variant_st = State()
+    reset_variant_st = State()
