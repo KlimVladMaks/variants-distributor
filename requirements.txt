@@ -2,3 +2,5 @@ SQLAlchemy==2.0.46
 aiosqlite==0.22.1
 aiogram==3.25.0
 python-dotenv==1.2.1
+gspread==6.2.1
+oauth2client==4.1.3
