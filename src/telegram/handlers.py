@@ -33,8 +33,10 @@ from ..database.crud import (
     get_student_by_isu,
     get_student_variant_number,
     get_variants_info_for_student,
+    update_student_variant,
+    get_variant_by_number,
 )
-from ..database.models import Student
+from ..database.models import Student, Variant
 
 
 router = Router()
@@ -447,7 +449,8 @@ async def student_confirm_auth(message: Message,
 async def student_main_menu_router(message: Message, state: FSMContext):
     variant_number = (await state.get_data()).get(FSMKeys.VARIANT_NUMBER)
     if variant_number:
-        pass
+        await state.set_state(SS.main_menu_with_variant_st)
+        await student_main_menu_with_variant(message, state, is_init=True)
     else:
         await state.set_state(SS.main_menu_without_variant_st)
         await student_main_menu_without_variant(message, state, is_init=True)
@@ -480,6 +483,37 @@ async def student_main_menu_without_variant(message: Message,
         )
 
 
+@router.message(StateFilter(SS.main_menu_with_variant_st))
+async def student_main_menu_with_variant(message: Message, 
+                                         state: FSMContext, 
+                                         is_init=False):
+    if is_init:
+        await message.answer("Главное меню. Ваш текущий вариант:")
+        variant_number = (await state.get_data())[FSMKeys.VARIANT_NUMBER]
+        if variant_number == -1:
+            await message.answer("Свой вариант")
+        else:
+            variant = await get_variant_by_number(variant_number)
+            await message.answer(
+                f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
+            )
+        await message.answer(
+            "Выберите интересующий вас раздел:",
+            reply_markup=SK.main_menu_with_variant_kb()
+        )
+    
+    elif message.text == BT.EXIT:
+        await message.answer("Выход из аккаунта студента.")
+        await state.clear()
+        await state.set_state(CS.choosing_role_st)
+        await choosing_role(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Не удалось распознать команду. Выберите интересующий вас раздел:"
+        )
+
+
 @router.message(StateFilter(SS.choose_variant_st))
 async def student_choose_variant(message: Message, 
                                  state: FSMContext, 
@@ -487,24 +521,123 @@ async def student_choose_variant(message: Message,
     if is_init:
         isu = (await state.get_data())[FSMKeys.ISU]
         unavailable, available = await get_variants_info_for_student(isu)
+        available_variants_dict: dict[int, Variant] = {}
+        unavailable_variants_dict: dict[int, Variant] = {}
+
         await message.answer("Выбор вариантов.")
+
         if unavailable:
-            await message.answer("Недоступные варианты:")
-            for msg in unavailable:
+            await message.answer("Полностью занятые варианты:")
+            for number, variant, msg in unavailable:
+                unavailable_variants_dict[number] = variant
                 await message.answer(msg)
+            await state.update_data({FSMKeys.UVD: unavailable_variants_dict})
+        
         if available:
-            await message.answer("Доступные варианты:")
-            for msg in available:
+            await message.answer("Свободные варианты:")
+            for number, variant, msg in available:
+                available_variants_dict[number] = variant
                 await message.answer(msg)
+            await state.update_data({FSMKeys.AVD: available_variants_dict})
+        
+        await message.answer(
+            'Введите номер свободного варианта или опцию "Свой вариант":',
+            reply_markup=SK.choose_variant_kb()
+        )
+    
+    elif message.text == BT.CANCEL:
+        await message.answer("Отмена выбора варианта.")
+        await state.update_data({FSMKeys.AVD: None})
+        await state.update_data({FSMKeys.UVD: None})
+        await state.set_state(SS.main_menu_without_variant_st)
+        await student_main_menu_without_variant(message, state, is_init=True)
+    
+    elif message.text == BT.OWN_VARIANT:
+        await state.update_data({FSMKeys.UVD: None})
+        await state.update_data({FSMKeys.PVN: -1})
+        await state.set_state(SS.confirm_choose_variant_st)
+        await student_confirm_choose_variant(message, state, is_init=True)
+
+    elif message.text.isdigit():
+        available_variants_dict = (await state.get_data()).get(FSMKeys.AVD)
+        unavailable_variants_dict = (await state.get_data()).get(FSMKeys.UVD)
+        variant_number = int(message.text)
+
+        if available_variants_dict and available_variants_dict.get(variant_number):
+            await state.update_data({FSMKeys.UVD: None})
+            await state.update_data({FSMKeys.PVN: variant_number})
+            await state.set_state(SS.confirm_choose_variant_st)
+            await student_confirm_choose_variant(message, state, is_init=True)
+        
+        elif unavailable_variants_dict and unavailable_variants_dict.get(variant_number):
+            await message.answer(
+                "Данный вариант уже полностью занят. " \
+                "Введите номер свободного варианта:",
+                reply_markup=CK.cancel_kb()
+            )
+        
+        else:
+            await message.answer(
+                "Не удалось найти вариант с данным номером. " \
+                "Введите номер свободного варианта:",
+                reply_markup=CK.cancel_kb()
+            )
+
+    else:
+        await message.answer("Не удалось распознать ввод.")
         await message.answer(
             "Введите номер свободного варианта, чтобы выбрать его:",
             reply_markup=CK.cancel_kb()
         )
     
+
+@router.message(StateFilter(SS.confirm_choose_variant_st))
+async def student_confirm_choose_variant(message: Message, 
+                                         state: FSMContext, 
+                                         is_init=False):
+    variant_number = (await state.get_data())[FSMKeys.PVN]
+    available_variants_dict = (await state.get_data())[FSMKeys.AVD]
+    
+    if is_init:
+        await message.answer("Подтвердите выбор варианта:")
+        if variant_number == -1:
+            await message.answer(
+                "Свой вариант.",
+                reply_markup=CK.confirm_kb()
+            )
+        else:
+            variant: Variant = available_variants_dict[variant_number]
+            await message.answer(
+                f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
+                reply_markup=CK.confirm_kb()
+            )
+    
     elif message.text == BT.CANCEL:
-        await message.answer("Отмена выбора варианта.")
-        await state.set_state(SS.main_menu_without_variant_st)
-        await student_main_menu_without_variant(message, state, is_init=True)
+        await message.answer(
+            "Выбор данного варианта был отменён. Выберите другой вариант."
+        )
+        await state.update_data({FSMKeys.AVD: None})
+        await state.update_data({FSMKeys.PVN: None})
+        await state.set_state(SS.choose_variant_st)
+        await student_choose_variant(message, state, is_init=True)
+    
+    elif message.text == BT.CONFIRM:
+        isu = (await state.get_data())[FSMKeys.ISU]
+        result = await update_student_variant(isu, variant_number)
+        if result == 0:
+            await state.update_data({FSMKeys.VARIANT_NUMBER: variant_number})
+            await state.update_data({FSMKeys.AVD: None})
+            await state.update_data({FSMKeys.PVN: None})
+            await message.answer(
+                "Вы успешно выбрали данный вариант. Переход в главное меню."
+            )
+            await state.set_state(SS.main_menu_with_variant_st)
+            await student_main_menu_with_variant(message, state, is_init=True)
+
+    else:
+        await message.state(
+            "Команда не распознана. Подтвердите выбор варианта."
+        )
 
 
 # ===========================

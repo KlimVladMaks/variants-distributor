@@ -22,6 +22,8 @@ class ButtonText:
     UPDATE_VARIANTS = "Обновить список вариантов"
     VIEW_VARIANTS = "Посмотреть список вариантов"
     CHOOSE_VARIANT = "Выбрать вариант"
+    CONFIRM = "Подтвердить"
+    OWN_VARIANT = "Свой вариант"
 
 
 @dataclass(frozen=True)
@@ -32,3 +34,6 @@ class FSMKeys:
     STUDENT = "student"
     ISU = "isu"
     VARIANT_NUMBER = "variant_number"
+    PVN = "potential_variant_number"
+    AVD = "available_variants_dict"
+    UVD = "unavailable_variants_dict"

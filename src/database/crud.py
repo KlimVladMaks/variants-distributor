@@ -316,6 +316,15 @@ async def get_all_variants():
         return result.all()
 
 
+async def get_variant_by_number(number: int) -> Optional[Variant]:
+    async with AsyncSession() as session:
+        variant = await session.execute(
+            select(Variant)
+            .where(Variant.number == number)
+        )
+        return variant.scalar_one_or_none()
+
+
 # ===== Студенты и варианты =====
 
 
@@ -382,20 +391,93 @@ async def get_variants_info_for_student(isu: str):
             )
 
             if is_available:
-                available.append(message)
+                available.append((variant.number, variant, message))
             else:
-                unavailable.append(message)
+                unavailable.append((variant.number, variant, message))
 
         return unavailable, available
 
 
-async def update_student_variant(isu: str, variant_number: int):
-    pass
+async def update_student_variant(isu: str, 
+                                 variant_number: Optional[int] = None) -> int:
+    """
+    Коды возврата:
+    0 - вариант студента успешно обновлён.
+    1 - данный вариант уже занят.
+
+    При variant_number=None вариант студента просто сбрасывается.
+    """
+    async with AsyncSession() as session:
+        student = await session.execute(
+            select(Student)
+            .where(Student.isu == isu)
+            .options(selectinload(Student.flow))
+        )
+        student = student.scalar_one_or_none()
+
+        students = await session.execute(
+            select(Student)
+            .where(Student.flow_id == student.flow_id)
+            .options(selectinload(Student.distribution))
+        )
+        students = students.scalars().all()
+
+        variants = await session.execute(select(Variant))
+        variants = variants.scalars().all()
+
+        if variant_number is None:
+            if student.distribution:
+                await session.delete(student.distribution)
+                await session.commit()
+            return 0
+
+        if variant_number == -1:
+            if student.distribution:
+                student.distribution.variant_id = None
+            else:
+                distribution = Distribution(
+                    student_id=student.id,
+                    variant_id=None
+                )
+                session.add(distribution)
+            await session.commit()
+            return 0
+        
+        target_variant = None
+        for variant in variants:
+            if variant.number == variant_number:
+                target_variant = variant
+                break
+        
+        total_students = len(students)
+        limit_per_variant = ceil(total_students / len(variants))
+
+        variant_counts = {v.id: 0 for v in variants}
+        for s in students:
+            if s.distribution and s.distribution.variant_id:
+                variant_counts[s.distribution.variant_id] += 1
+        
+        current_count = variant_counts[target_variant.id]
+        if current_count >= limit_per_variant:
+            return 1
+        
+        if student.distribution:
+            student.distribution.variant_id = target_variant.id
+        else:
+            distribution = Distribution(
+                student_id=student.id,
+                variant_id=target_variant.id
+            )
+            session.add(distribution)
+        
+        await session.commit()
+        return 0
 
 
 # ===== Статистика =====
 
 
+'''
 async def get_variants_distribution_stats():
     """
     Возвращает статистику распределения вариантов по потокам.
@@ -456,3 +538,4 @@ async def get_variants_distribution_stats():
             result[flow.title] = flow_stats
         
         return result
+'''

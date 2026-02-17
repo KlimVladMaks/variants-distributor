@@ -55,6 +55,16 @@ class CommonKeyboards:
             resize_keyboard=True
         )
 
+    def confirm_kb():
+        buttons = [
+            [KeyboardButton(text=BT.CONFIRM)],
+            [KeyboardButton(text=BT.CANCEL)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
 
 class TeacherKeyboards:
     """Клавиатуры для раздела 'Преподаватель'"""
@@ -121,6 +131,25 @@ class StudentKeyboards:
         buttons = [
             [KeyboardButton(text=BT.CHOOSE_VARIANT)],
             [KeyboardButton(text=BT.EXIT)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+    def main_menu_with_variant_kb():
+        buttons = [
+            [KeyboardButton(text=BT.EXIT)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+    def choose_variant_kb():
+        buttons = [
+            [KeyboardButton(text=BT.OWN_VARIANT)],
+            [KeyboardButton(text=BT.CANCEL)],
         ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
