@@ -73,8 +73,7 @@ class TeacherKeyboards:
         buttons = [
             [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
             [KeyboardButton(text=BT.VARIANTS)],
-            [KeyboardButton(text=BT.EXPORT_TO_GS)],
-            [KeyboardButton(text=BT.STATS)],
+            [KeyboardButton(text=BT.EXPORT)],
             [KeyboardButton(text=BT.EXIT)]
         ]
         return ReplyKeyboardMarkup(
@@ -118,6 +117,16 @@ class TeacherKeyboards:
     def update_variants_menu_kb():
         buttons = [
             [KeyboardButton(text=BT.CSV)],
+            [KeyboardButton(text=BT.BACK)],
+        ]
+        return ReplyKeyboardMarkup(
+            keyboard=buttons,
+            resize_keyboard=True
+        )
+
+    def export_menu_kb():
+        buttons = [
+            [KeyboardButton(text=BT.GOOGLE_SHEETS)],
             [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(

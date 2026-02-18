@@ -107,20 +107,46 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         await state.set_state(TS.variants_menu_st)
         await teacher_variants_menu(message, state, is_init=True)
     
-    elif message.text == BT.EXPORT_TO_GS:
-        message_status = await message.answer("Экспорт...")
-        students_data = await get_students_data_for_google_sheets()
-        variants_data = await get_variants_data_for_google_sheets()
-        export_to_google_sheet(students_data, SHEET_KEY, "students")
-        export_to_google_sheet(variants_data, SHEET_KEY, "variants")
-        await message_status.edit_text("Данные успешно экспортированы в Google Таблицу.")
-        await teacher_main_menu(message, state, is_init=True)
+    elif message.text == BT.EXPORT:
+        await state.set_state(TS.export_menu_st)
+        await teacher_export_menu(message, state, is_init=True)
 
     else:
         await message.answer(
             "Команда не распознана. Выберите интересующий вас раздел:",
             reply_markup=TK.main_menu_kb()
         )
+
+
+@router.message(StateFilter(TS.export_menu_st))
+async def teacher_export_menu(message: Message, 
+                              state: FSMContext, 
+                              is_init=False):
+    if is_init:
+        await message.answer(
+            "Меню экспорта. Выберите способ экспорта:",
+            reply_markup=TK.export_menu_kb()
+        )
+    
+    elif message.text == BT.BACK:
+        await state.set_state(TS.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    
+    elif message.text == BT.GOOGLE_SHEETS:
+        message_status = await message.answer("Экспорт...")
+        students_data = await get_students_data_for_google_sheets()
+        variants_data = await get_variants_data_for_google_sheets()
+        export_to_google_sheet(students_data, SHEET_KEY, "students")
+        export_to_google_sheet(variants_data, SHEET_KEY, "variants")
+        await message_status.edit_text(
+            "Данные успешно экспортированы в Google Таблицу. Возврат в главное меню."
+        )
+        await state.set_state(TS.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer("Не удалось распознать команду.")
+        await teacher_export_menu(message, state, is_init=True)
 
 
 # ===== Студенты и потоки =====
