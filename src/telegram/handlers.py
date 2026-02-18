@@ -193,6 +193,7 @@ async def teacher_students_menu(message: Message,
             reply_markup=TK.students_menu_kb()
         )
 
+
 # Обновление списка студентов
 @router.message(StateFilter(TS.update_students_menu_st))
 async def teacher_update_students_menu(message: Message, 
@@ -281,8 +282,8 @@ async def teacher_confirm_update_students_via_csv(message: Message,
         await update_students(students)
         await state.update_data({FSMKeys.STUDENTS: None})
         await message.answer("Обновления сохранены.")
-        await state.set_state(TS.update_students_menu_st)
-        await teacher_update_students_menu(message, state, is_init=True)
+        await state.set_state(TS.students_menu_st)
+        await teacher_students_menu(message, state, is_init=True)
     
     else:
         await message.answer("Не удалось распознать команду.")
