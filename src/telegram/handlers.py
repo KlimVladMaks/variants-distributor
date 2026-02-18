@@ -1,3 +1,4 @@
+from typing import Optional
 from aiogram import Router
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, Document
@@ -596,10 +597,13 @@ async def student_update_variant(message: Message,
 
         if variant_number:
             await message.answer("Ваш текущий вариант:")
-            variant = await get_variant_by_number(variant_number)
-            await message.answer(
-                f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
-            )
+            if variant_number == -1:
+                await message.answer("Свой вариант.")
+            else:
+                variant: Variant = await get_variant_by_number(variant_number)
+                await message.answer(
+                    f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
+                )
 
         await message.answer("Выбор вариантов.")
 
