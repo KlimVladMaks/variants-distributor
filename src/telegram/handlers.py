@@ -418,8 +418,8 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
         await update_variants(variants)
         await state.update_data({FSMKeys.VARIANTS: None})
         await message.answer("Обновления сохранены.")
-        await state.set_state(TS.update_variants_menu_st)
-        await teacher_update_variants_menu(message, state, is_init=True)
+        await state.set_state(TS.variants_menu_st)
+        await teacher_variants_menu(message, state, is_init=True)
     
     else:
         await message.answer("Не удалось распознать команду.")

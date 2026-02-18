@@ -17,7 +17,9 @@ class Flow(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
 
-    students = relationship("Student", back_populates="flow")
+    students = relationship("Student", 
+                            back_populates="flow", 
+                            cascade="all, delete-orphan")
 
 
 class Student(Base):
@@ -29,8 +31,10 @@ class Student(Base):
     full_name = Column(String, nullable=False)
 
     flow = relationship("Flow", back_populates="students")
-    distribution = relationship("Distribution", back_populates="student", 
-                                uselist=False)
+    distribution = relationship("Distribution", 
+                                back_populates="student", 
+                                uselist=False, 
+                                cascade="all, delete-orphan")
 
 
 class Variant(Base):
@@ -41,7 +45,9 @@ class Variant(Base):
     title = Column(String, nullable=False, unique=True)
     description = Column(String, nullable=False, unique=True)
 
-    distributions = relationship("Distribution", back_populates="variant")
+    distributions = relationship("Distribution", 
+                                 back_populates="variant", 
+                                 cascade="all, delete-orphan")
 
     __table_args__ = (
         CheckConstraint('number > 0', name='check_number_positive'),
