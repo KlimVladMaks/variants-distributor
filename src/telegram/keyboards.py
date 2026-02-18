@@ -73,6 +73,7 @@ class TeacherKeyboards:
         buttons = [
             [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
             [KeyboardButton(text=BT.VARIANTS)],
+            [KeyboardButton(text=BT.EXPORT_TO_GS)],
             [KeyboardButton(text=BT.STATS)],
             [KeyboardButton(text=BT.EXIT)]
         ]

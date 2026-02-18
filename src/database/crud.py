@@ -476,7 +476,7 @@ async def update_student_variant(isu: str,
 # ===== Google Sheets =====
 
 
-async def get_students_report_for_google_sheets():
+async def get_students_data_for_google_sheets():
     async with AsyncSession() as session:
         flows_query = (
             select(Flow)
@@ -511,7 +511,7 @@ async def get_students_report_for_google_sheets():
         return report
 
 
-async def get_variants_report_for_google_sheets():
+async def get_variants_data_for_google_sheets():
     async with AsyncSession() as session:
         flows_query = (
             select(Flow)

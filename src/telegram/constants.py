@@ -27,6 +27,7 @@ class ButtonText:
     VIEW_VARIANTS = "Посмотреть варианты"
     CHANGE_VARIANT = "Выбрать другой вариант"
     RESET_VARIANT = "Сбросить вариант"
+    EXPORT_TO_GS = "Экспортировать в Google Таблицы"
 
 
 @dataclass(frozen=True)

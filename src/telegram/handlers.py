@@ -17,7 +17,10 @@ from .states import (
     Teacher as TS, 
     Student as SS,
 )
-from ...config import TG_TEACHER_PASSWORD
+from ..config import (
+    TG_TEACHER_PASSWORD,
+    SHEET_KEY,
+)
 from .utils import (
     parse_students_csv,
     parse_variants_csv,
@@ -35,8 +38,11 @@ from ..database.crud import (
     get_variants_info_for_student,
     update_student_variant,
     get_variant_by_number,
+    get_students_data_for_google_sheets,
+    get_variants_data_for_google_sheets,
 )
 from ..database.models import Student, Variant
+from ..google_sheets.export import export_to_google_sheet
 
 
 router = Router()
@@ -99,6 +105,15 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
     elif message.text == BT.VARIANTS:
         await state.set_state(TS.variants_menu_st)
         await teacher_variants_menu(message, state, is_init=True)
+    
+    elif message.text == BT.EXPORT_TO_GS:
+        message_status = await message.answer("Экспорт...")
+        students_data = await get_students_data_for_google_sheets()
+        variants_data = await get_variants_data_for_google_sheets()
+        export_to_google_sheet(students_data, SHEET_KEY, "students")
+        export_to_google_sheet(variants_data, SHEET_KEY, "variants")
+        await message_status.edit_text("Данные успешно экспортированы в Google Таблицу.")
+        await teacher_main_menu(message, state, is_init=True)
 
     else:
         await message.answer(
@@ -383,9 +398,6 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
             "Сохранить обновления?",
             reply_markup=CK.yes_or_no_kb()
         )
-
-
-# ===== Google Sheets =====
 
 
 # =============================
