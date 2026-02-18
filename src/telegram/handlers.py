@@ -1,4 +1,3 @@
-from typing import Optional
 from aiogram import Router
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, Document
@@ -18,7 +17,7 @@ from .states import (
     Teacher as TS, 
     Student as SS,
 )
-from ..config import TG_TEACHER_PASSWORD
+from ...config import TG_TEACHER_PASSWORD
 from .utils import (
     parse_students_csv,
     parse_variants_csv,
@@ -384,6 +383,9 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
             "Сохранить обновления?",
             reply_markup=CK.yes_or_no_kb()
         )
+
+
+# ===== Google Sheets =====
 
 
 # =============================

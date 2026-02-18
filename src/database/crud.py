@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import (
     selectinload, 
     joinedload, 
-    outerjoin
 )
 
 from .models import (
@@ -472,6 +471,97 @@ async def update_student_variant(isu: str,
         
         await session.commit()
         return 0
+
+
+# ===== Google Sheets =====
+
+
+async def get_students_report_for_google_sheets():
+    async with AsyncSession() as session:
+        flows_query = (
+            select(Flow)
+            .options(
+                selectinload(Flow.students)
+                .selectinload(Student.distribution)
+                .selectinload(Distribution.variant)
+            )
+            .order_by(Flow.title)
+        )
+        result = await session.execute(flows_query)
+        flows = result.scalars().all()
+
+        report = []
+        report.append(["isu", "full_name", "variant_number", "variant_title"])
+
+        for flow in flows:
+            report.append([flow.title])
+
+            sorted_students = sorted(flow.students, key=lambda s: s.full_name)
+            for student in sorted_students:
+                student_data = [student.isu, student.full_name]
+                if student.distribution and student.distribution.variant:
+                    student_data.extend([
+                        student.distribution.variant.number,
+                        student.distribution.variant.title
+                    ])
+                elif student.distribution and student.distribution.variant_id is None:
+                    student_data.extend([-1, "Свой вариант"])
+                report.append(student_data)
+        
+        return report
+
+
+async def get_variants_report_for_google_sheets():
+    async with AsyncSession() as session:
+        flows_query = (
+            select(Flow)
+            .options(
+                selectinload(Flow.students)
+                .selectinload(Student.distribution)
+            )
+            .order_by(Flow.title)
+        )
+        flows = await session.execute(flows_query)
+        flows = flows.scalars().all()
+
+        variants_query = select(Variant).order_by(Variant.number)
+        variants = await session.execute(variants_query)
+        variants = variants.scalars().all()
+
+        report = []
+        report.append(["number", "title", "taken", "limit", "percent"])
+
+        for flow in flows:
+            report.append([flow.title])
+
+            flow_students = flow.students
+            total_students = len(flow_students)
+            variants_count = len(variants)
+            limit_per_variant = ceil(total_students / variants_count)
+
+            custom_variant_students = [
+                s for s in flow_students 
+                if s.distribution and s.distribution.variant_id is None
+            ]
+            custom_variant_count = len(custom_variant_students)
+            report.append([-1, "Свой вариант", custom_variant_count])
+
+            for variant in variants:
+                students_with_variant = [
+                    s for s in flow_students 
+                    if s.distribution and s.distribution.variant_id == variant.id
+                ]
+                taken_count = len(students_with_variant)
+                percent = f"{int((taken_count / limit_per_variant) * 100)}%"
+                report.append([
+                    variant.number,
+                    variant.title,
+                    taken_count,
+                    limit_per_variant,
+                    percent
+                ])
+            
+        return report
 
 
 # ===== Статистика =====
