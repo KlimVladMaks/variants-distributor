@@ -154,6 +154,7 @@ class StudentKeyboards:
     def update_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.OWN_VARIANT)],
+            [KeyboardButton(text=BT.RANDOM_VARIANT)],
             [KeyboardButton(text=BT.CANCEL)],
         ]
         return ReplyKeyboardMarkup(

@@ -1,3 +1,4 @@
+import random
 from aiogram import Router
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, Document
@@ -653,6 +654,18 @@ async def student_update_variant(message: Message,
         await state.set_state(SS.confirm_choose_variant_st)
         await student_confirm_update_variant(message, state, is_init=True)
 
+    elif message.text == BT.RANDOM_VARIANT:
+        await message.answer("Вам будет предложен случайный вариант из доступных.")
+        available_variants_dict = (await state.get_data()).get(FSMKeys.AVD)
+        if available_variants_dict:
+            variant_number = random.choice(list(available_variants_dict.keys()))
+            await state.update_data({FSMKeys.UVD: None})
+            await state.update_data({FSMKeys.PVN: variant_number})
+            await state.set_state(SS.confirm_choose_variant_st)
+            await student_confirm_update_variant(message, state, is_init=True)
+        else:
+            await message.answer("Нет доступных вариантов.")
+
     elif message.text.isdigit():
         available_variants_dict = (await state.get_data()).get(FSMKeys.AVD)
         unavailable_variants_dict = (await state.get_data()).get(FSMKeys.UVD)
@@ -668,14 +681,14 @@ async def student_update_variant(message: Message,
             await message.answer(
                 'Данный вариант уже полностью занят. ' \
                 'Введите номер свободного варианта или выберите опцию "Свой вариант":',
-                reply_markup=CK.cancel_kb()
+                reply_markup=SK.update_variant_kb()
             )
         
         else:
             await message.answer(
                 'Не удалось найти вариант с данным номером. ' \
                 'Введите номер свободного варианта или выберите опцию "Свой вариант":',
-                reply_markup=CK.cancel_kb()
+                reply_markup=SK.update_variant_kb()
             )
 
     else:
