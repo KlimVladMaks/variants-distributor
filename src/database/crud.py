@@ -179,6 +179,17 @@ async def update_students(students):
         await session.commit()
 
 
+async def update_student_chat_id(isu, new_chat_id):
+    async with AsyncSession() as session:
+        result = await session.execute(
+            select(Student)
+            .where(Student.isu == isu)
+        )
+        student = result.scalar_one()
+        student.chat_id = new_chat_id
+        await session.commit()
+
+
 async def get_all_students_with_flows():
     """Получить всех студентов с их потоками"""
     async with AsyncSession() as session:
@@ -195,8 +206,27 @@ async def get_student_by_isu(isu: str) -> Optional[Student]:
     async with AsyncSession() as session:
         query = (
             select(Student)
-            .options(joinedload(Student.flow))
+            .options(
+                joinedload(Student.flow),
+                joinedload(Student.distribution)
+                .joinedload(Distribution.variant)
+            )
             .where(Student.isu == isu)
+        )
+        student = await session.execute(query)
+        return student.scalar_one_or_none()
+
+
+async def get_student_by_chat_id(chat_id: int) -> Optional[Student]:
+    async with AsyncSession() as session:
+        query = (
+            select(Student)
+            .options(
+                joinedload(Student.flow),
+                joinedload(Student.distribution)
+                .joinedload(Distribution.variant)
+            )
+            .where(Student.chat_id == chat_id)
         )
         student = await session.execute(query)
         return student.scalar_one_or_none()
@@ -327,13 +357,13 @@ async def get_variant_by_number(number: int) -> Optional[Variant]:
 # ===== Студенты и варианты =====
 
 
-async def get_student_variant_number(isu: str) -> Optional[int]:
+async def get_student_variant_number(chat_id: int) -> Optional[int]:
     async with AsyncSession() as session:
         query = (
             select(Distribution, Variant.number)
             .join(Student, Student.id == Distribution.student_id)
             .outerjoin(Variant, Variant.id == Distribution.variant_id)
-            .where(Student.isu == isu)
+            .where(Student.chat_id == chat_id)
         )
         result = await session.execute(query)
         row = result.first()
@@ -345,11 +375,11 @@ async def get_student_variant_number(isu: str) -> Optional[int]:
         return variant_number
 
 
-async def get_variants_info_for_student(isu: str):
+async def get_variants_info_for_student(chat_id: int):
     async with AsyncSession() as session:
         student = await session.execute(
             select(Student)
-            .where(Student.isu == isu)
+            .where(Student.chat_id == chat_id)
             .options(selectinload(Student.flow))
         )
         student = student.scalar_one_or_none()
@@ -397,7 +427,7 @@ async def get_variants_info_for_student(isu: str):
         return unavailable, available
 
 
-async def update_student_variant(isu: str, 
+async def update_student_variant(chat_id: int, 
                                  variant_number: Optional[int] = None) -> int:
     """
     Коды возврата:
@@ -409,7 +439,7 @@ async def update_student_variant(isu: str,
     async with AsyncSession() as session:
         student = await session.execute(
             select(Student)
-            .where(Student.isu == isu)
+            .where(Student.chat_id == chat_id)
             .options(selectinload(Student.flow))
         )
         student = student.scalar_one_or_none()
@@ -562,70 +592,3 @@ async def get_variants_data_for_google_sheets():
                 ])
             
         return report
-
-
-# ===== Статистика =====
-
-
-'''
-async def get_variants_distribution_stats():
-    """
-    Возвращает статистику распределения вариантов по потокам.
-    
-    Формат возвращаемых данных:
-    {
-        "название_потока": [
-            (-1, число_выбравших_свой_вариант),
-            (номер_варианта, заголовок_варианта, число_взявших, лимит),
-            (номер_варианта, заголовок_варианта, число_взявших, лимит),
-            ...
-        ],
-        ...
-    }
-    """
-    async with AsyncSession() as session:
-        flows_query = await session.execute(
-            select(Flow).options(
-                selectinload(Flow.students).selectinload(Student.distribution)
-            ).order_by(Flow.title)
-        )
-        flows = flows_query.scalars().all()
-
-        variants_query = await session.execute(
-            select(Variant).order_by(Variant.number)
-        )
-        variants = variants_query.scalars().all()
-
-        result = {}
-
-        for flow in flows:
-            total_students = len(flow.students)
-            num_variants = len(variants)
-
-            limit_per_variant = ceil(total_students / num_variants)
-
-            variant_counts = {variant.id: 0 for variant in variants}
-            custom_variant_count = 0
-
-            for student in flow.students:
-                if student.distribution:
-                    if student.distribution.variant_id is None:
-                        custom_variant_count += 1
-                    else:
-                        variant_id = student.distribution.variant_id
-                        variant_counts[variant_id] += 1
-            
-            flow_stats = [(-1, custom_variant_count)]
-
-            for variant in variants:
-                flow_stats.append((
-                    variant.number,
-                    variant.title,
-                    variant_counts[variant.id],
-                    limit_per_variant
-                ))
-            
-            result[flow.title] = flow_stats
-        
-        return result
-'''

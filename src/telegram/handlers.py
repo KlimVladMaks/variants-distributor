@@ -27,21 +27,7 @@ from .utils import (
     parse_variants_csv,
     format_students_by_flows,
 )
-from ..database.crud import (
-    get_all_students_with_flows,
-    get_update_students_info,
-    get_update_variants_info,
-    update_students,
-    update_variants,
-    get_all_variants,
-    get_student_by_isu,
-    get_student_variant_number,
-    get_variants_info_for_student,
-    update_student_variant,
-    get_variant_by_number,
-    get_students_data_for_google_sheets,
-    get_variants_data_for_google_sheets,
-)
+from ..database import crud
 from ..database.models import Student, Variant
 from ..google_sheets.export import export_to_google_sheet
 
@@ -135,10 +121,10 @@ async def teacher_export_menu(message: Message,
     
     elif message.text == BT.GOOGLE_SHEETS:
         message_status = await message.answer("Экспорт...")
-        students_data = await get_students_data_for_google_sheets()
-        variants_data = await get_variants_data_for_google_sheets()
-        export_to_google_sheet(students_data, SHEET_KEY, "students")
-        export_to_google_sheet(variants_data, SHEET_KEY, "variants")
+        students_data = await crud.get_students_data_for_google_sheets()
+        variants_data = await crud.get_variants_data_for_google_sheets()
+        export_to_google_sheet(students_data, SHEET_KEY, "students_from_bot")
+        export_to_google_sheet(variants_data, SHEET_KEY, "variants_from_bot")
         await message_status.edit_text(
             "Данные успешно экспортированы в Google Таблицу. Возврат в главное меню."
         )
@@ -174,7 +160,7 @@ async def teacher_students_menu(message: Message,
         await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.text == BT.VIEW_STUDENTS:
-        students = await get_all_students_with_flows()
+        students = await crud.get_all_students_with_flows()
         if not students:
             await message.answer("Нет студентов.")
         else:
@@ -258,7 +244,7 @@ async def teacher_confirm_update_students_via_csv(message: Message,
     students = (await state.get_data())[FSMKeys.STUDENTS]
 
     if is_init:
-        update_students_info = await get_update_students_info(students)
+        update_students_info = await crud.get_update_students_info(students)
         if not update_students_info:
             await message.answer("Обновлений не найдено.")
             await state.set_state(TS.update_students_menu_st)
@@ -279,7 +265,7 @@ async def teacher_confirm_update_students_via_csv(message: Message,
         await teacher_update_students_menu(message, state, is_init=True)
     
     elif message.text == BT.YES:
-        await update_students(students)
+        await crud.update_students(students)
         await state.update_data({FSMKeys.STUDENTS: None})
         await message.answer("Обновления сохранены.")
         await state.set_state(TS.students_menu_st)
@@ -317,7 +303,7 @@ async def teacher_variants_menu(message: Message,
     
     elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список вариантов:")
-        variants = await get_all_variants()
+        variants = await crud.get_all_variants()
         if not variants:
             await message.answer("Нет вариантов")
         else:
@@ -394,7 +380,7 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
     variants = (await state.get_data())[FSMKeys.VARIANTS]
 
     if is_init:
-        update_variants_info = await get_update_variants_info(variants)
+        update_variants_info = await crud.get_update_variants_info(variants)
         if not update_variants_info:
             await message.answer("Обновлений не найдено.")
             await state.set_state(TS.update_variants_menu_st)
@@ -415,7 +401,7 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
         await teacher_update_variants_menu(message, state, is_init=True)
     
     elif message.text == BT.YES:
-        await update_variants(variants)
+        await crud.update_variants(variants)
         await state.update_data({FSMKeys.VARIANTS: None})
         await message.answer("Обновления сохранены.")
         await state.set_state(TS.variants_menu_st)
@@ -449,7 +435,7 @@ async def student_auth(message: Message, state: FSMContext, is_init=False):
     
     else:
         isu = message.text
-        student: Student = await get_student_by_isu(isu)
+        student: Student = await crud.get_student_by_isu(isu)
         if not student:
             await message.answer(
                 "Не удалось найти студента с данным табельным номером. " \
@@ -482,18 +468,16 @@ async def student_confirm_auth(message: Message,
     
     elif message.text == BT.YES:
         student: Student = (await state.get_data())[FSMKeys.STUDENT]
-        variant_number = await get_student_variant_number(student.isu)
-        await message.answer(f"Здравствуйте, {student.full_name}!")
         await state.update_data({FSMKeys.STUDENT: None})
-        await state.update_data({FSMKeys.ISU: student.isu})
-        await state.update_data({FSMKeys.VARIANT_NUMBER: variant_number})
+        await crud.update_student_chat_id(student.isu, message.chat.id)
+        await message.answer(f"Здравствуйте, {student.full_name}!")
         await student_main_menu_router(message, state)
 
 
 # Роутер для распределения между главными меню
 async def student_main_menu_router(message: Message, state: FSMContext):
-    variant_number = (await state.get_data()).get(FSMKeys.VARIANT_NUMBER)
-    if variant_number:
+    student = await crud.get_student_by_chat_id(message.chat.id)
+    if student.distribution:
         await state.set_state(SS.main_menu_with_variant_st)
         await student_main_menu_with_variant(message, state, is_init=True)
     else:
@@ -507,17 +491,14 @@ async def student_main_menu_without_variant(message: Message,
                                             state: FSMContext, 
                                             is_init=False):
     if is_init:
+        student = await crud.get_student_by_chat_id(message.chat.id)
         await message.answer(
-            "Главное меню.\n\nВы пока ещё не выбрали вариант.\n\n" \
-            "Выберите интересующий вас раздел:",
+            f"Главное меню.\n\n" \
+            f"{student.isu}, {student.full_name}, {student.flow.title}\n\n" \
+            f"Вы пока ещё не выбрали вариант.\n\n" \
+            f"Выберите интересующий вас раздел:",
             reply_markup=SK.main_menu_without_variant_kb()
         )
-    
-    elif message.text == BT.EXIT:
-        await message.answer("Выход из аккаунта студента.")
-        await state.clear()
-        await state.set_state(CS.choosing_role_st)
-        await choosing_role(message, state, is_init=True)
     
     elif message.text == BT.CHOOSE_VARIANT:
         await state.set_state(SS.update_variant_st)
@@ -525,8 +506,7 @@ async def student_main_menu_without_variant(message: Message,
     
     elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список всех вариантов:")
-        isu = (await state.get_data())[FSMKeys.ISU]
-        unavailable, available = await get_variants_info_for_student(isu)
+        unavailable, available = await crud.get_variants_info_for_student(message.chat.id)
         if unavailable:
             await message.answer("Полностью занятые варианты:")
             for _, _, msg in unavailable:
@@ -549,12 +529,17 @@ async def student_main_menu_with_variant(message: Message,
                                          state: FSMContext, 
                                          is_init=False):
     if is_init:
-        await message.answer("Главное меню. Ваш текущий вариант:")
-        variant_number = (await state.get_data())[FSMKeys.VARIANT_NUMBER]
-        if variant_number == -1:
+        student = await crud.get_student_by_chat_id(message.chat.id)
+        await message.answer(
+            f"Главное меню.\n\n" \
+            f"{student.isu}, {student.full_name}, {student.flow.title}\n\n" \
+            f"Ваш текущий вариант:"
+        )
+        student = await crud.get_student_by_chat_id(message.chat.id)
+        if student.distribution.variant is None:
             await message.answer("Свой вариант")
         else:
-            variant = await get_variant_by_number(variant_number)
+            variant = student.distribution.variant
             await message.answer(
                 f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
             )
@@ -563,20 +548,13 @@ async def student_main_menu_with_variant(message: Message,
             reply_markup=SK.main_menu_with_variant_kb()
         )
     
-    elif message.text == BT.EXIT:
-        await message.answer("Выход из аккаунта студента.")
-        await state.clear()
-        await state.set_state(CS.choosing_role_st)
-        await choosing_role(message, state, is_init=True)
-    
     elif message.text == BT.CHANGE_VARIANT:
         await state.set_state(SS.update_variant_st)
         await student_update_variant(message, state, is_init=True)
     
     elif message.text == BT.VIEW_VARIANTS:
         await message.answer("Список всех вариантов:")
-        isu = (await state.get_data())[FSMKeys.ISU]
-        unavailable, available = await get_variants_info_for_student(isu)
+        unavailable, available = await crud.get_variants_info_for_student(message.chat.id)
         if unavailable:
             await message.answer("Полностью занятые варианты:")
             for _, _, msg in unavailable:
@@ -614,9 +592,7 @@ async def student_reset_variant(message: Message,
         await student_main_menu_with_variant(message, state, is_init=True)
     
     elif message.text == BT.YES:
-        isu = (await state.get_data())[FSMKeys.ISU]
-        await update_student_variant(isu, variant_number=None)
-        await state.update_data({FSMKeys.VARIANT_NUMBER: None})
+        await crud.update_student_variant(message.chat.id, variant_number=None)
         await message.answer("Ваш вариант был успешно сброшен.")
         await state.set_state(SS.main_menu_without_variant_st)
         await student_main_menu_without_variant(message, state, is_init=True)
@@ -632,18 +608,17 @@ async def student_update_variant(message: Message,
                                  state: FSMContext, 
                                  is_init=False):
     if is_init:
-        isu = (await state.get_data())[FSMKeys.ISU]
-        variant_number = (await state.get_data()).get(FSMKeys.VARIANT_NUMBER)
-        unavailable, available = await get_variants_info_for_student(isu)
+        unavailable, available = await crud.get_variants_info_for_student(message.chat.id)
         available_variants_dict: dict[int, Variant] = {}
         unavailable_variants_dict: dict[int, Variant] = {}
 
-        if variant_number:
+        student = await crud.get_student_by_chat_id(message.chat.id)
+        if student.distribution:
             await message.answer("Ваш текущий вариант:")
-            if variant_number == -1:
+            if student.distribution.variant is None:
                 await message.answer("Свой вариант.")
             else:
-                variant: Variant = await get_variant_by_number(variant_number)
+                variant: Variant = student.distribution.variant
                 await message.answer(
                     f"№{variant.number}\n\n{variant.title}\n\n{variant.description}",
                 )
@@ -759,10 +734,8 @@ async def student_confirm_update_variant(message: Message,
         await student_update_variant(message, state, is_init=True)
     
     elif message.text == BT.CONFIRM:
-        isu = (await state.get_data())[FSMKeys.ISU]
-        result = await update_student_variant(isu, variant_number)
+        result = await crud.update_student_variant(message.chat.id, variant_number)
         if result == 0:
-            await state.update_data({FSMKeys.VARIANT_NUMBER: variant_number})
             await state.update_data({FSMKeys.AVD: None})
             await state.update_data({FSMKeys.PVN: None})
             await message.answer(
@@ -815,9 +788,14 @@ async def start(message: Message, state: FSMContext):
 
 @router.message()
 async def something_wrong(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer(
-        "Похоже что-то пошло не так. " \
-        "Нажмите на /start чтобы перезапустить бота.",
-        reply_markup=CK.start_kb()
-    )
+    chat_id = message.chat.id
+    student = await crud.get_student_by_chat_id(chat_id)
+    if student:
+        await message.answer(
+            f"Здравствуйте, {student.full_name}! Похоже, бот был перезапущен. " \
+            f"Вы будете перенаправлены в главное меню."
+        )
+        await student_main_menu_router(message, state)
+    else:
+        await state.set_state(CS.choosing_role_st)
+        await choosing_role(message, state, is_init=True)

@@ -141,7 +141,6 @@ class StudentKeyboards:
         buttons = [
             [KeyboardButton(text=BT.CHOOSE_VARIANT)],
             [KeyboardButton(text=BT.VIEW_VARIANTS)],
-            [KeyboardButton(text=BT.EXIT)],
         ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
@@ -153,7 +152,6 @@ class StudentKeyboards:
             [KeyboardButton(text=BT.CHANGE_VARIANT)],
             [KeyboardButton(text=BT.RESET_VARIANT)],
             [KeyboardButton(text=BT.VIEW_VARIANTS)],
-            [KeyboardButton(text=BT.EXIT)],
         ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,

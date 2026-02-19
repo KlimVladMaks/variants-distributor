@@ -5,6 +5,7 @@ from sqlalchemy import (
     String,
     ForeignKey,
     CheckConstraint,
+    BigInteger,
 )
 
 
@@ -29,6 +30,7 @@ class Student(Base):
     flow_id = Column(Integer, ForeignKey('flows.id'), nullable=False)
     isu = Column(String, nullable=False, unique=True)
     full_name = Column(String, nullable=False)
+    chat_id = Column(BigInteger, nullable=True, unique=True)
 
     flow = relationship("Flow", back_populates="students")
     distribution = relationship("Distribution", 
