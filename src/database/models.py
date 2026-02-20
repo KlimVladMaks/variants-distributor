@@ -68,3 +68,10 @@ class Distribution(Base):
 
     student = relationship("Student", back_populates="distribution")
     variant = relationship("Variant", back_populates="distributions")
+
+
+class Teacher(Base):
+    """Преподаватель"""
+    __tablename__ = 'teachers'
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(BigInteger, nullable=False, unique=True)

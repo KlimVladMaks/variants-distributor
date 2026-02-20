@@ -55,6 +55,7 @@ async def teacher_auth(message: Message, state: FSMContext, is_init=False):
         password = message.text
 
         if password == TG_TEACHER_PASSWORD:
+            await crud.add_teacher_chat_id(message.chat.id)
             await state.set_state(TS.main_menu_st)
             await teacher_main_menu(message, state, is_init=True)
         
@@ -74,13 +75,6 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
             "Главное меню преподавателя. Выберите интересующий вас раздел:",
             reply_markup=TK.main_menu_kb()
         )
-    
-    elif message.text == BT.EXIT:
-        await message.answer(
-            "Вы вышли из роли преподавателя."
-        )
-        await state.set_state(CS.choosing_role_st)
-        await choosing_role(message, state, is_init=True)
     
     elif message.text == BT.STUDENTS_AND_FLOWS:
         await state.set_state(TS.students_menu_st)
@@ -780,18 +774,19 @@ async def choosing_role(message: Message, state: FSMContext, is_init=False):
         )
 
 
-@router.message(CommandStart())
-async def start(message: Message, state: FSMContext):
-    """Обработчик команды /start"""
-    await state.set_state(CS.choosing_role_st)
-    await choosing_role(message, state, is_init=True)
-
-
 @router.message()
 async def something_wrong(message: Message, state: FSMContext):
     chat_id = message.chat.id
+    is_teacher = await crud.is_teacher_chat_id(chat_id)
     student = await crud.get_student_by_chat_id(chat_id)
-    if student:
+    if is_teacher:
+        await message.answer(
+            f"Здравствуйте! Похоже, бот был перезапущен. " \
+            f"Вы будете перенаправлены в главное меню."
+        )
+        await state.set_state(TS.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    elif student:
         await message.answer(
             f"Здравствуйте, {student.full_name}! Похоже, бот был перезапущен. " \
             f"Вы будете перенаправлены в главное меню."

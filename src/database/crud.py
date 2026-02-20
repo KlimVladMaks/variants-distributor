@@ -11,7 +11,8 @@ from .models import (
     Flow, 
     Student, 
     Variant, 
-    Distribution
+    Distribution,
+    Teacher,
 )
 from .database import AsyncSession
 
@@ -601,3 +602,23 @@ async def get_variants_data_for_google_sheets():
                 ])
             
         return report
+
+
+# ===== Преподаватели =====
+
+
+async def is_teacher_chat_id(chat_id: int) -> bool:
+    async with AsyncSession() as session:
+        teacher = await session.execute(
+            select(Teacher)
+            .where(Teacher.chat_id == chat_id)
+        )
+        teacher = teacher.scalar_one_or_none()
+        return True if teacher else False
+
+
+async def add_teacher_chat_id(new_chat_id):
+    async with AsyncSession() as session:
+        teacher = Teacher(chat_id=new_chat_id)
+        session.add(teacher)
+        await session.commit()

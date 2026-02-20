@@ -74,7 +74,6 @@ class TeacherKeyboards:
             [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
             [KeyboardButton(text=BT.VARIANTS)],
             [KeyboardButton(text=BT.EXPORT)],
-            [KeyboardButton(text=BT.EXIT)]
         ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
