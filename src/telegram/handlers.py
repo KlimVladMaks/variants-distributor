@@ -18,10 +18,7 @@ from .states import (
     Teacher as TS, 
     Student as SS,
 )
-from ..config import (
-    TG_TEACHER_PASSWORD,
-    SHEET_KEY,
-)
+from ..config import TG_TEACHER_PASSWORD
 from .utils import (
     parse_students_csv,
     parse_variants_csv,
@@ -29,7 +26,7 @@ from .utils import (
 )
 from ..database import crud
 from ..database.models import Student, Variant
-from ..google_sheets.export import export_to_google_sheet
+from ..google_sheets.export import export_to_google_sheets
 
 
 router = Router()
@@ -121,13 +118,17 @@ async def teacher_export_menu(message: Message,
     
     elif message.text == BT.GOOGLE_SHEETS:
         message_status = await message.answer("Экспорт...")
-        students_data = await crud.get_students_data_for_google_sheets()
-        variants_data = await crud.get_variants_data_for_google_sheets()
-        export_to_google_sheet(students_data, SHEET_KEY, "students_from_bot")
-        export_to_google_sheet(variants_data, SHEET_KEY, "variants_from_bot")
-        await message_status.edit_text(
-            "Данные успешно экспортированы в Google Таблицу. Возврат в главное меню."
-        )
+        try:
+            await export_to_google_sheets()
+        except Exception as e:
+            await message_status.edit_text(
+                "Не удалось совершить экспорт в Google Таблицу. " \
+                "Попробуйте позже. Возврат в главное меню."
+            )
+        else:
+            await message_status.edit_text(
+                "Данные успешно экспортированы в Google Таблицу. Возврат в главное меню."
+            )
         await state.set_state(TS.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
     

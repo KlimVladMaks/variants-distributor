@@ -5,6 +5,7 @@ from sqlalchemy.orm import (
     selectinload, 
     joinedload, 
 )
+from datetime import datetime
 
 from .models import (
     Flow, 
@@ -521,6 +522,10 @@ async def get_students_data_for_google_sheets():
         flows = result.scalars().all()
 
         report = []
+
+        now = datetime.now()
+        report.append(["Обновлено:", now.strftime("%Y-%m-%d %H:%M:%S")])
+
         report.append(["isu", "full_name", "variant_number", "variant_title"])
 
         for flow in flows:
@@ -559,6 +564,10 @@ async def get_variants_data_for_google_sheets():
         variants = variants.scalars().all()
 
         report = []
+
+        now = datetime.now()
+        report.append(["Обновлено:", now.strftime("%Y-%m-%d %H:%M:%S")])
+
         report.append(["number", "title", "taken", "limit", "percent"])
 
         for flow in flows:

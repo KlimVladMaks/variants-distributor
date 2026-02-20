@@ -1,8 +1,11 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+from ..database import crud
+from ..config import SHEET_KEY
 
-def export_to_google_sheet(data, sheet_key, worksheet_name):
+
+def export(data, sheet_key, worksheet_name):
     scope = ['https://spreadsheets.google.com/feeds']
     creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
     client = gspread.authorize(creds)
@@ -15,3 +18,10 @@ def export_to_google_sheet(data, sheet_key, worksheet_name):
         worksheet = sheet.add_worksheet(title=worksheet_name, rows=1000, cols=20)
 
     worksheet.update(range_name='A1', values=data)
+
+
+async def export_to_google_sheets():
+    students_data = await crud.get_students_data_for_google_sheets()
+    variants_data = await crud.get_variants_data_for_google_sheets()
+    export(students_data, SHEET_KEY, "students_from_bot")
+    export(variants_data, SHEET_KEY, "variants_from_bot")
