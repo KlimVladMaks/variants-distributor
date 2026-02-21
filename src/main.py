@@ -2,7 +2,7 @@ import asyncio
 
 from .telegram.bot import start_bot
 from .database.database import init_db
-from .google_sheets.export import export_to_google_sheets
+from .google_sheets.gs_export import export_to_google_sheets
 
 
 async def background_export_to_google_sheets(interval_hours: int = 24):

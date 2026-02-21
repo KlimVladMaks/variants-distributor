@@ -81,7 +81,7 @@ async def get_update_students_info(students):
             block = "Будут добавлены студенты:\n\n"
             for isu, full_name, flow_title in sorted(
                 students_to_add,
-                key=lambda x: x[1]
+                key=lambda x: (x[2], x[1])
             ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
@@ -90,7 +90,7 @@ async def get_update_students_info(students):
             block = "Будут изменены данные студентов:\n\n"
             for isu, old_name, old_flow, new_name, new_flow in sorted(
                 students_to_update,
-                key=lambda x: x[3]
+                key=lambda x: (x[4], x[3])
             ):
                 block += f"{isu}, ({new_name}, {new_flow} <- " \
                          f"{old_name}, {old_flow})\n"
@@ -100,7 +100,7 @@ async def get_update_students_info(students):
             block = "Будут удалены студенты:\n\n"
             for isu, full_name, flow_title in sorted(
                 students_to_delete,
-                key=lambda x: x[1]
+                key=lambda x: (x[2], x[1])
             ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
@@ -237,7 +237,11 @@ async def get_student_by_chat_id(chat_id: int) -> Optional[Student]:
 # ===== Варианты =====
 
 
-async def get_update_variants_info(variants):
+async def get_update_variants_info(variants_data):
+    variants = []
+    for number, title, description in variants_data:
+        variants.append((int(number), title, description))
+
     async with AsyncSession() as session:
         variants_result = await session.execute(select(Variant))
         existing_variants = {
@@ -299,7 +303,11 @@ async def get_update_variants_info(variants):
         return result
 
 
-async def update_variants(variants):
+async def update_variants(variants_data):
+    variants = []
+    for number, title, description in variants_data:
+        variants.append((int(number), title, description))
+
     async with AsyncSession() as session:
         variants_result = await session.execute(select(Variant))
         existing_variants = {
