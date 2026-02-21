@@ -23,6 +23,8 @@ async def main():
             scheduled_export_to_google_sheets,
             CronTrigger(hour=hour, minute=0),
         )
+    scheduler.start()
+
     await start_bot()
 
 
