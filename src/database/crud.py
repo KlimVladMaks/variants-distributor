@@ -78,7 +78,8 @@ async def get_update_students_info(students):
         result = []
 
         if students_to_add:
-            block = "Будут добавлены студенты:\n\n"
+            result.append("Будут добавлены студенты:")
+            block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_add,
                 key=lambda x: (x[2], x[1])
@@ -87,7 +88,8 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if students_to_update:
-            block = "Будут изменены данные студентов:\n\n"
+            result.append("Будут изменены данные студентов:")
+            block = ""
             for isu, old_name, old_flow, new_name, new_flow in sorted(
                 students_to_update,
                 key=lambda x: (x[4], x[3])
@@ -97,7 +99,8 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if students_to_delete:
-            block = "Будут удалены студенты:\n\n"
+            result.append("Будут удалены студенты:")
+            block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_delete,
                 key=lambda x: (x[2], x[1])
@@ -106,13 +109,15 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if flows_to_add:
-            block = "Будут добавлены потоки:\n\n"
+            result.append("Будут добавлены потоки:")
+            block = ""
             for title in sorted(flows_to_add):
                 block += f"{title}\n"
             result.append(block.rstrip('\n'))
         
         if flows_to_delete:
-            block = "Будут удалены потоки:\n\n"
+            result.append("Будут удалены потоки:")
+            block = ""
             for title in sorted(flows_to_delete):
                 block += f"{title}\n"
             result.append(block.rstrip('\n'))
