@@ -88,20 +88,22 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         await message.answer("Текущие данные в БД:")
 
         students = await crud.get_all_students_with_flows()
-        await message.answer("Список студентов по потокам:")
+        await message.answer("👨‍🎓 Список студентов по потокам:")
         if not students:
             await message.answer("Нет студентов.")
         else:
+            await message.answer(f"Всего студентов: {len(students)}")
             students_by_flows = format_students_by_flows(students)
             for flow, students_str in students_by_flows:
                 await message.answer(flow + ":")
                 await message.answer(students_str)
         
         variants = await crud.get_all_variants()
-        await message.answer("Список вариантов:")
+        await message.answer("📄 Список вариантов:")
         if not variants:
             await message.answer("Нет вариантов.")
         else:
+            await message.answer(f"Всего вариантов: {len(variants)}")
             for number, title, description in variants:
                 await message.answer(f"№{number}. {title}\n\n{description}")
         
