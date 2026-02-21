@@ -1,22 +1,30 @@
 import asyncio
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from .telegram.bot import start_bot
 from .database.database import init_db
-from .google_sheets.export import export_to_google_sheets
+from .google_sheets.gs_export import export_to_google_sheets
 
 
-async def background_export_to_google_sheets(interval_hours: int = 24):
-    while True:
-        try:
-            await asyncio.sleep(interval_hours * 3600)
-            await export_to_google_sheets()
-        except Exception as e:
-            print(f"Ошибка при фоновом экспорте в Google Таблицу: {e}")
+async def scheduled_export_to_google_sheets():
+    try:
+        await export_to_google_sheets()
+    except Exception as e:
+        print(f"Ошибка при запланированном экспорте в Google Таблицу: {e}")
 
 
 async def main():
     await init_db()
-    asyncio.create_task(background_export_to_google_sheets(interval_hours=24))
+    
+    scheduler = AsyncIOScheduler()
+    for hour in [0, 6, 12, 18]:
+        scheduler.add_job(
+            scheduled_export_to_google_sheets,
+            CronTrigger(hour=hour, minute=0),
+        )
+    scheduler.start()
+
     await start_bot()
 
 

@@ -71,8 +71,8 @@ class TeacherKeyboards:
     def main_menu_kb():
         """Главное меню"""
         buttons = [
-            [KeyboardButton(text=BT.STUDENTS_AND_FLOWS)],
-            [KeyboardButton(text=BT.VARIANTS)],
+            [KeyboardButton(text=BT.UPDATE)],
+            [KeyboardButton(text=BT.VIEW)],
             [KeyboardButton(text=BT.EXPORT)],
         ]
         return ReplyKeyboardMarkup(

@@ -10,6 +10,7 @@ class Teacher(StatesGroup):
     """Состояния пользователя с ролью 'Преподаватель'"""
     auth_st = State()
     main_menu_st = State()
+    confirm_update_data_st = State()
     export_menu_st = State()
 
     # ===== Студенты и потоки =====

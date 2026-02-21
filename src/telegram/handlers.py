@@ -26,7 +26,11 @@ from .utils import (
 )
 from ..database import crud
 from ..database.models import Student, Variant
-from ..google_sheets.export import export_to_google_sheets
+from ..google_sheets.gs_export import export_to_google_sheets
+from ..google_sheets.gs_import import (
+    get_students_data_from_google_sheets,
+    get_variants_data_from_google_sheets,
+)
 
 
 router = Router()
@@ -76,17 +80,49 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
             reply_markup=TK.main_menu_kb()
         )
     
-    elif message.text == BT.STUDENTS_AND_FLOWS:
-        await state.set_state(TS.students_menu_st)
-        await teacher_students_menu(message, state, is_init=True)
+    elif message.text == BT.UPDATE:
+        await state.set_state(TS.confirm_update_data_st)
+        await teacher_confirm_update_data(message, state, is_init=True)
     
-    elif message.text == BT.VARIANTS:
-        await state.set_state(TS.variants_menu_st)
-        await teacher_variants_menu(message, state, is_init=True)
+    elif message.text == BT.VIEW:
+        await message.answer("Текущие данные в БД:")
+
+        students = await crud.get_all_students_with_flows()
+        await message.answer("👨‍🎓 Список студентов по потокам:")
+        if not students:
+            await message.answer("Нет студентов.")
+        else:
+            await message.answer(f"Всего студентов: {len(students)}")
+            students_by_flows = format_students_by_flows(students)
+            for flow, students_str in students_by_flows:
+                await message.answer(flow + ":")
+                await message.answer(students_str)
+        
+        variants = await crud.get_all_variants()
+        await message.answer("📄 Список вариантов:")
+        if not variants:
+            await message.answer("Нет вариантов.")
+        else:
+            await message.answer(f"Всего вариантов: {len(variants)}")
+            for number, title, description in variants:
+                await message.answer(f"№{number}. {title}\n\n{description}")
+        
+        await teacher_main_menu(message, state, is_init=True)
     
     elif message.text == BT.EXPORT:
-        await state.set_state(TS.export_menu_st)
-        await teacher_export_menu(message, state, is_init=True)
+        msg = await message.answer("Экспорт в Google Таблицу...")
+        try:
+            await export_to_google_sheets()
+        except Exception as e:
+            await msg.edit_text(
+                "Не удалось совершить экспорт в Google Таблицу. " \
+                "Попробуйте позже. Возврат в главное меню."
+            )
+        else:
+            await msg.edit_text(
+                "Данные успешно экспортированы в Google Таблицу."
+            )
+        await teacher_main_menu(message, state, is_init=True)
 
     else:
         await message.answer(
@@ -95,6 +131,77 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         )
 
 
+@router.message(StateFilter(TS.confirm_update_data_st))
+async def teacher_confirm_update_data(message: Message, 
+                                      state: FSMContext, 
+                                      is_init=False):
+    if is_init:
+        msg = await message.answer("Импорт данных из Google Таблицы...")
+
+        try:
+            students_data = get_students_data_from_google_sheets()
+            variants_data = get_variants_data_from_google_sheets()
+        except:
+            msg.edit_text("Не удалось совершить импорт из Google Таблицы. Попробуйте позже.")
+            await state.set_state(TS.main_menu_st)
+            await teacher_main_menu(message, state, is_init=True)
+            return
+
+        await msg.edit_text("Данные из Google Таблицы загружены.")
+        await message.answer("В БД будут внесены следующие обновления:")
+        students_update_info = await crud.get_update_students_info(students_data)
+        variants_update_info = await crud.get_update_variants_info(variants_data)
+
+        if students_update_info:
+            for info in students_update_info:
+                await message.answer(info)
+            await state.update_data({FSMKeys.STUDENTS_DATA: students_data})
+        else:
+            await message.answer("Нет обновлений для студентов.")
+        
+        if variants_update_info:
+            for info in variants_update_info:
+                await message.answer(info)
+            await state.update_data({FSMKeys.VARIANTS_DATA: variants_data})
+        else:
+            await message.answer("Нет обновлений для вариантов.")
+        
+        if students_update_info or variants_update_info:
+            await message.answer(
+                "Сохранить данные обновления?",
+                reply_markup=CK.yes_or_no_kb()
+            )
+        else:
+            await message.answer("Обновлений не найдено.")
+            await state.set_state(TS.main_menu_st)
+            await teacher_main_menu(message, state, is_init=True)
+    
+    elif message.text == BT.NO:
+        await state.update_data({FSMKeys.STUDENTS_DATA: None})
+        await state.update_data({FSMKeys.VARIANTS_DATA: None})
+        await message.answer("Отмена обновлений. Возврат в главное меню.")
+        await state.set_state(TS.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    
+    elif message.text == BT.YES:
+        students = (await state.get_data()).get(FSMKeys.STUDENTS_DATA)
+        variants = (await state.get_data()).get(FSMKeys.VARIANTS_DATA)
+        if students:
+            await crud.update_students(students)
+        if variants:
+            await crud.update_variants(variants)
+        await message.answer("Обновления сохранены. Возврат в главное меню.")
+        await state.set_state(TS.main_menu_st)
+        await teacher_main_menu(message, state, is_init=True)
+    
+    else:
+        await message.answer(
+            "Не удалось распознать команду. Сохранить данные обновления?",
+            reply_markup=CK.yes_or_no_kb()
+        )
+
+
+'''
 # Меню экспорта
 @router.message(StateFilter(TS.export_menu_st))
 async def teacher_export_menu(message: Message, 
@@ -129,9 +236,6 @@ async def teacher_export_menu(message: Message,
     else:
         await message.answer("Не удалось распознать команду.")
         await teacher_export_menu(message, state, is_init=True)
-
-
-# ===== Студенты и потоки =====
 
 
 # Студенты и потоки
@@ -274,9 +378,6 @@ async def teacher_confirm_update_students_via_csv(message: Message,
         )
 
 
-# ===== Варианты =====
-
-
 # Варианты
 @router.message(StateFilter(TS.variants_menu_st))
 async def teacher_variants_menu(message: Message, 
@@ -408,7 +509,7 @@ async def teacher_confirm_update_variants_via_csv(message: Message,
             "Сохранить обновления?",
             reply_markup=CK.yes_or_no_kb()
         )
-
+'''
 
 # =============================
 # ===== STUDENTS HANDLERS =====

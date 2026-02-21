@@ -30,6 +30,8 @@ class ButtonText:
     EXPORT = "Экспорт"
     RANDOM_VARIANT = "Случайный вариант"
     GOOGLE_SHEETS = "Google Таблицы"
+    UPDATE = "Обновить"
+    VIEW = "Посмотреть"
 
 
 @dataclass(frozen=True)
@@ -43,3 +45,5 @@ class FSMKeys:
     PVN = "potential_variant_number"
     AVD = "available_variants_dict"
     UVD = "unavailable_variants_dict"
+    STUDENTS_DATA = "students_data"
+    VARIANTS_DATA = "variants_data"

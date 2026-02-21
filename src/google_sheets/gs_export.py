@@ -5,7 +5,7 @@ from ..database import crud
 from ..config import SHEET_KEY
 
 
-def export(data, sheet_key, worksheet_name):
+def gs_export(data, sheet_key, worksheet_name):
     scope = ['https://spreadsheets.google.com/feeds']
     creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
     client = gspread.authorize(creds)
@@ -23,5 +23,5 @@ def export(data, sheet_key, worksheet_name):
 async def export_to_google_sheets():
     students_data = await crud.get_students_data_for_google_sheets()
     variants_data = await crud.get_variants_data_for_google_sheets()
-    export(students_data, SHEET_KEY, "students_from_bot")
-    export(variants_data, SHEET_KEY, "variants_from_bot")
+    gs_export(students_data, SHEET_KEY, "students_from_bot")
+    gs_export(variants_data, SHEET_KEY, "variants_from_bot")

@@ -78,41 +78,46 @@ async def get_update_students_info(students):
         result = []
 
         if students_to_add:
-            block = "Будут добавлены студенты:\n\n"
+            result.append("Будут добавлены студенты:")
+            block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_add,
-                key=lambda x: x[1]
+                key=lambda x: (x[2], x[1])
             ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
         
         if students_to_update:
-            block = "Будут изменены данные студентов:\n\n"
+            result.append("Будут изменены данные студентов:")
+            block = ""
             for isu, old_name, old_flow, new_name, new_flow in sorted(
                 students_to_update,
-                key=lambda x: x[3]
+                key=lambda x: (x[4], x[3])
             ):
                 block += f"{isu}, ({new_name}, {new_flow} <- " \
                          f"{old_name}, {old_flow})\n"
             result.append(block.rstrip('\n'))
         
         if students_to_delete:
-            block = "Будут удалены студенты:\n\n"
+            result.append("Будут удалены студенты:")
+            block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_delete,
-                key=lambda x: x[1]
+                key=lambda x: (x[2], x[1])
             ):
                 block += f"{isu}, {full_name}, {flow_title}\n"
             result.append(block.rstrip('\n'))
         
         if flows_to_add:
-            block = "Будут добавлены потоки:\n\n"
+            result.append("Будут добавлены потоки:")
+            block = ""
             for title in sorted(flows_to_add):
                 block += f"{title}\n"
             result.append(block.rstrip('\n'))
         
         if flows_to_delete:
-            block = "Будут удалены потоки:\n\n"
+            result.append("Будут удалены потоки:")
+            block = ""
             for title in sorted(flows_to_delete):
                 block += f"{title}\n"
             result.append(block.rstrip('\n'))
@@ -237,7 +242,11 @@ async def get_student_by_chat_id(chat_id: int) -> Optional[Student]:
 # ===== Варианты =====
 
 
-async def get_update_variants_info(variants):
+async def get_update_variants_info(variants_data):
+    variants = []
+    for number, title, description in variants_data:
+        variants.append((int(number), title, description))
+
     async with AsyncSession() as session:
         variants_result = await session.execute(select(Variant))
         existing_variants = {
@@ -299,7 +308,11 @@ async def get_update_variants_info(variants):
         return result
 
 
-async def update_variants(variants):
+async def update_variants(variants_data):
+    variants = []
+    for number, title, description in variants_data:
+        variants.append((int(number), title, description))
+
     async with AsyncSession() as session:
         variants_result = await session.execute(select(Variant))
         existing_variants = {
