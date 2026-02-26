@@ -17,7 +17,9 @@ from .models import (
 from .database import AsyncSession
 
 
+# ====================
 # ===== Студенты =====
+# ====================
 
 async def get_update_students_info(students):
     async with AsyncSession() as session:
@@ -239,7 +241,9 @@ async def get_student_by_chat_id(chat_id: int) -> Optional[Student]:
         return student.scalar_one_or_none()
 
 
+# ====================
 # ===== Варианты =====
+# ====================
 
 
 async def get_update_variants_info(variants_data):
@@ -369,25 +373,9 @@ async def get_variant_by_number(number: int) -> Optional[Variant]:
         return variant.scalar_one_or_none()
 
 
+# ===============================
 # ===== Студенты и варианты =====
-
-
-async def get_student_variant_number(chat_id: int) -> Optional[int]:
-    async with AsyncSession() as session:
-        query = (
-            select(Distribution, Variant.number)
-            .join(Student, Student.id == Distribution.student_id)
-            .outerjoin(Variant, Variant.id == Distribution.variant_id)
-            .where(Student.chat_id == chat_id)
-        )
-        result = await session.execute(query)
-        row = result.first()
-        if row is None:
-            return None
-        distribution, variant_number = row
-        if distribution.variant_id is None:
-            return -1
-        return variant_number
+# ===============================
 
 
 async def get_variants_info_for_student(chat_id: int):
@@ -518,7 +506,9 @@ async def update_student_variant(chat_id: int,
         return 0
 
 
+# =========================
 # ===== Google Sheets =====
+# =========================
 
 
 async def get_students_data_for_google_sheets():
@@ -617,7 +607,9 @@ async def get_variants_data_for_google_sheets():
         return report
 
 
+# =========================
 # ===== Преподаватели =====
+# =========================
 
 
 async def is_teacher_chat_id(chat_id: int) -> bool:
