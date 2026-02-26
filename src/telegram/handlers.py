@@ -20,8 +20,6 @@ from .states import (
 )
 from ..config import TG_TEACHER_PASSWORD
 from .utils import (
-    parse_students_csv,
-    parse_variants_csv,
     format_students_by_flows,
 )
 from ..database import crud
