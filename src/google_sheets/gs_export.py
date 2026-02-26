@@ -1,5 +1,6 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import asyncio
 
 from ..database import crud
 from ..config import SHEET_KEY
@@ -23,5 +24,5 @@ def gs_export(data, sheet_key, worksheet_name):
 async def export_to_google_sheets():
     students_data = await crud.get_students_data_for_google_sheets()
     variants_data = await crud.get_variants_data_for_google_sheets()
-    gs_export(students_data, SHEET_KEY, "students_from_bot")
-    gs_export(variants_data, SHEET_KEY, "variants_from_bot")
+    await asyncio.to_thread(gs_export, students_data, SHEET_KEY, "students_from_bot")
+    await asyncio.to_thread(gs_export, variants_data, SHEET_KEY, "variants_from_bot")

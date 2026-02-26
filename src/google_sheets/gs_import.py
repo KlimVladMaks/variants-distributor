@@ -1,5 +1,6 @@
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import asyncio
 
 from ..config import SHEET_KEY
 
@@ -27,13 +28,13 @@ def gs_import(sheet_key, worksheet_name):
     return result
 
 
-def get_students_data_from_google_sheets():
-    students_data = gs_import(SHEET_KEY, "students_for_bot")
+async def get_students_data_from_google_sheets():
+    students_data = await asyncio.to_thread(gs_import, SHEET_KEY, "students_for_bot")
     del students_data[0]
     return students_data
 
 
-def get_variants_data_from_google_sheets():
-    variants_data = gs_import(SHEET_KEY, "variants_for_bot")
+async def get_variants_data_from_google_sheets():
+    variants_data = await asyncio.to_thread(gs_import, SHEET_KEY, "variants_for_bot")
     del variants_data[0]
     return variants_data
