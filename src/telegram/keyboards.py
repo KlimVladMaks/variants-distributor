@@ -36,14 +36,6 @@ class CommonKeyboards:
             resize_keyboard=True
         )
     
-    def start_kb():
-        """Кнопка 'start'"""
-        buttons = [[KeyboardButton(text=BT.START)]]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-    
     def yes_or_no_kb():
         """Клавиатура Да или Нет"""
         buttons = [
@@ -74,59 +66,6 @@ class TeacherKeyboards:
             [KeyboardButton(text=BT.UPDATE)],
             [KeyboardButton(text=BT.VIEW)],
             [KeyboardButton(text=BT.EXPORT)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-
-    def students_menu_kb():
-        """Раздел со студентами и потоками"""
-        buttons = [
-            [KeyboardButton(text=BT.UPDATE_STUDENTS)],
-            [KeyboardButton(text=BT.VIEW_STUDENTS)],
-            [KeyboardButton(text=BT.BACK)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-
-    def update_students_menu_kb():
-        buttons = [
-            [KeyboardButton(text=BT.CSV)],
-            [KeyboardButton(text=BT.BACK)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-
-    def variants_menu_kb():
-        buttons = [
-            [KeyboardButton(text=BT.UPDATE_VARIANTS)],
-            [KeyboardButton(text=BT.VIEW_VARIANTS)],
-            [KeyboardButton(text=BT.BACK)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-
-    def update_variants_menu_kb():
-        buttons = [
-            [KeyboardButton(text=BT.CSV)],
-            [KeyboardButton(text=BT.BACK)],
-        ]
-        return ReplyKeyboardMarkup(
-            keyboard=buttons,
-            resize_keyboard=True
-        )
-
-    def export_menu_kb():
-        buttons = [
-            [KeyboardButton(text=BT.GOOGLE_SHEETS)],
-            [KeyboardButton(text=BT.BACK)],
         ]
         return ReplyKeyboardMarkup(
             keyboard=buttons,
