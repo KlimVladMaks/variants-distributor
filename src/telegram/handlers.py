@@ -43,8 +43,9 @@ router = Router()
 
 # Авторизация
 @router.message(StateFilter(TS.auth_st))
-async def teacher_auth(message: Message, state: FSMContext, is_init=False):
-    """Авторизация преподавателя"""
+async def teacher_auth(message: Message, 
+                       state: FSMContext, 
+                       is_init=False):
     if is_init:
         await message.answer(
             "Введите пароль:",
@@ -72,8 +73,9 @@ async def teacher_auth(message: Message, state: FSMContext, is_init=False):
 
 # Главное меню
 @router.message(StateFilter(TS.main_menu_st))
-async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
-    """Главное меню преподавателя"""
+async def teacher_main_menu(message: Message, 
+                            state: FSMContext, 
+                            is_init=False):
     if is_init:
         await message.answer(
             "Главное меню преподавателя. Выберите интересующий вас раздел:",
@@ -131,6 +133,7 @@ async def teacher_main_menu(message: Message, state: FSMContext, is_init=False):
         )
 
 
+# Подтверждение обновления данных
 @router.message(StateFilter(TS.confirm_update_data_st))
 async def teacher_confirm_update_data(message: Message, 
                                       state: FSMContext, 
@@ -208,7 +211,9 @@ async def teacher_confirm_update_data(message: Message,
 
 # Авторизация студента
 @router.message(StateFilter(SS.auth_st))
-async def student_auth(message: Message, state: FSMContext, is_init=False):
+async def student_auth(message: Message, 
+                       state: FSMContext, 
+                       is_init=False):
     if is_init:
         await message.answer(
             "Введите ваш табельный номер (6 цифр):",
@@ -549,9 +554,11 @@ async def student_confirm_update_variant(message: Message,
 # ===========================
 
 
+# Выбор роли
 @router.message(StateFilter(CS.choosing_role_st))
-async def choosing_role(message: Message, state: FSMContext, is_init=False):
-    """Раздел с выбором роли пользователя"""
+async def choosing_role(message: Message, 
+                        state: FSMContext, 
+                        is_init=False):
     if is_init:
         await message.answer(
             "Здравствуйте! Выберите вашу роль:",
@@ -573,11 +580,11 @@ async def choosing_role(message: Message, state: FSMContext, is_init=False):
         )
 
 
+# Роутер по-умолчанию
 @router.message()
-async def something_wrong(message: Message, state: FSMContext):
+async def default_router(message: Message, state: FSMContext):
     chat_id = message.chat.id
     is_teacher = await crud.is_teacher_chat_id(chat_id)
-    student = await crud.get_student_by_chat_id(chat_id)
     if is_teacher:
         await message.answer(
             f"Здравствуйте! Похоже, бот был перезапущен. " \
@@ -585,7 +592,9 @@ async def something_wrong(message: Message, state: FSMContext):
         )
         await state.set_state(TS.main_menu_st)
         await teacher_main_menu(message, state, is_init=True)
-    elif student:
+        return
+    student = await crud.get_student_by_chat_id(chat_id)
+    if student:
         await message.answer(
             f"Здравствуйте, {student.full_name}! Похоже, бот был перезапущен. " \
             f"Вы будете перенаправлены в главное меню."
