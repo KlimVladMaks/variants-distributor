@@ -142,7 +142,7 @@ async def teacher_confirm_update_data(message: Message,
             students_data = await get_students_data_from_google_sheets()
             variants_data = await get_variants_data_from_google_sheets()
         except:
-            msg.edit_text("Не удалось совершить импорт из Google Таблицы. Попробуйте позже.")
+            await msg.edit_text("Не удалось совершить импорт из Google Таблицы. Попробуйте позже.")
             await state.set_state(TS.main_menu_st)
             await teacher_main_menu(message, state, is_init=True)
             return

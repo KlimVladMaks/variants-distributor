@@ -38,6 +38,6 @@ async def safe_message_answer(message: Message, text: str, reply_markup=None):
         part = text[i:i + MAX_LENGTH]
         parts.append(part)
     
-    for part in parts:
+    for i, part in enumerate(parts):
         current_markup = reply_markup if i == len(parts) - 1 else None
         await message.answer(part, reply_markup=current_markup)

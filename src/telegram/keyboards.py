@@ -9,6 +9,7 @@ from .constants import ButtonText as BT
 
 class CommonKeyboards:
     """Общие клавиатуры"""
+    @staticmethod
     def choosing_role_kb():
         """Выбор роли: 'Студент' или 'Преподаватель'"""
         buttons = [
@@ -20,6 +21,7 @@ class CommonKeyboards:
             resize_keyboard=True
         )
 
+    @staticmethod
     def back_kb():
         """Кнопка 'Назад'"""
         buttons = [[KeyboardButton(text=BT.BACK)]]
@@ -28,6 +30,7 @@ class CommonKeyboards:
             resize_keyboard=True
         )
 
+    @staticmethod
     def cancel_kb():
         """Кнопка 'Отмена'"""
         buttons = [[KeyboardButton(text=BT.CANCEL)]]
@@ -36,6 +39,7 @@ class CommonKeyboards:
             resize_keyboard=True
         )
     
+    @staticmethod
     def yes_or_no_kb():
         """Клавиатура Да или Нет"""
         buttons = [
@@ -47,6 +51,7 @@ class CommonKeyboards:
             resize_keyboard=True
         )
 
+    @staticmethod
     def confirm_kb():
         buttons = [
             [KeyboardButton(text=BT.CONFIRM)],
@@ -60,6 +65,7 @@ class CommonKeyboards:
 
 class TeacherKeyboards:
     """Клавиатуры для раздела 'Преподаватель'"""
+    @staticmethod
     def main_menu_kb():
         """Главное меню"""
         buttons = [
@@ -75,6 +81,7 @@ class TeacherKeyboards:
 
 class StudentKeyboards:
     """Клавиатуры для раздела 'Студент'"""
+    @staticmethod
     def main_menu_without_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.CHOOSE_VARIANT)],
@@ -85,6 +92,7 @@ class StudentKeyboards:
             resize_keyboard=True
         )
 
+    @staticmethod
     def main_menu_with_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.CHANGE_VARIANT)],
@@ -96,6 +104,7 @@ class StudentKeyboards:
             resize_keyboard=True
         )
 
+    @staticmethod
     def update_variant_kb():
         buttons = [
             [KeyboardButton(text=BT.OWN_VARIANT)],
