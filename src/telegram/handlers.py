@@ -21,6 +21,7 @@ from .states import (
 from ..config import TG_TEACHER_PASSWORD
 from .utils import (
     format_students_by_flows,
+    safe_message_answer,
 )
 from ..database import crud
 from ..database.models import Student, Variant
@@ -88,22 +89,20 @@ async def teacher_main_menu(message: Message,
         await message.answer("Текущие данные в БД:")
 
         students = await crud.get_all_students_with_flows()
-        await message.answer("👨‍🎓 Список студентов по потокам:")
         if not students:
-            await message.answer("Нет студентов.")
+            await message.answer("👨‍🎓 Нет студентов.")
         else:
-            await message.answer(f"Всего студентов: {len(students)}")
+            await message.answer(f"👨‍🎓 Список студентов по потокам ({len(students)}):")
             students_by_flows = format_students_by_flows(students)
-            for flow, students_str in students_by_flows:
-                await message.answer(flow + ":")
-                await message.answer(students_str)
+            for flow, students_count, students_str in students_by_flows:
+                await message.answer(f"{flow} ({students_count}):")
+                await safe_message_answer(message, students_str)
         
         variants = await crud.get_all_variants()
-        await message.answer("📄 Список вариантов:")
         if not variants:
-            await message.answer("Нет вариантов.")
+            await message.answer("📄 Нет вариантов.")
         else:
-            await message.answer(f"Всего вариантов: {len(variants)}")
+            await message.answer(f"📄 Список вариантов ({len(variants)}):")
             for number, title, description in variants:
                 await message.answer(f"№{number}. {title}\n\n{description}")
         
@@ -155,7 +154,7 @@ async def teacher_confirm_update_data(message: Message,
 
         if students_update_info:
             for info in students_update_info:
-                await message.answer(info)
+                await safe_message_answer(message, info)
             await state.update_data({FSMKeys.STUDENTS_DATA: students_data})
         else:
             await message.answer("Нет обновлений для студентов.")

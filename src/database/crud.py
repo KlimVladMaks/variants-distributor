@@ -81,7 +81,7 @@ async def get_update_students_info(students):
         result = []
 
         if students_to_add:
-            result.append("Будут добавлены студенты:")
+            result.append(f"Будут добавлены студенты ({len(students_to_add)}):")
             block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_add,
@@ -91,7 +91,7 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if students_to_update:
-            result.append("Будут изменены данные студентов:")
+            result.append(f"Будут изменены данные студентов ({len(students_to_update)}):")
             block = ""
             for isu, old_name, old_flow, new_name, new_flow in sorted(
                 students_to_update,
@@ -102,7 +102,7 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if students_to_delete:
-            result.append("Будут удалены студенты:")
+            result.append(f"Будут удалены студенты ({len(students_to_delete)}):")
             block = ""
             for isu, full_name, flow_title in sorted(
                 students_to_delete,
@@ -112,14 +112,14 @@ async def get_update_students_info(students):
             result.append(block.rstrip('\n'))
         
         if flows_to_add:
-            result.append("Будут добавлены потоки:")
+            result.append(f"Будут добавлены потоки ({len(flows_to_add)}):")
             block = ""
             for title in sorted(flows_to_add):
                 block += f"{title}\n"
             result.append(block.rstrip('\n'))
         
         if flows_to_delete:
-            result.append("Будут удалены потоки:")
+            result.append(f"Будут удалены потоки ({len(flows_to_delete)}):")
             block = ""
             for title in sorted(flows_to_delete):
                 block += f"{title}\n"
@@ -291,12 +291,12 @@ async def get_update_variants_info(variants_data):
         result = []
 
         if variants_to_add:
-            result.append("Будут добавлены варианты:")
+            result.append(f"Будут добавлены варианты ({len(variants_to_add)}):")
             for number, title, description in sorted(variants_to_add):
                 result.append(f"№{number}. {title}\n\n{description}")
         
         if variants_to_update:
-            result.append("Будут изменены варианты:")
+            result.append(f"Будут изменены варианты ({len(variants_to_update)}):")
             for number, old_title, old_description, \
                 title, description in sorted(variants_to_update):
                 result.append(
@@ -306,7 +306,7 @@ async def get_update_variants_info(variants_data):
                 )
         
         if variants_to_delete:
-            result.append("Будут удалены варианты:")
+            result.append(f"Будут удалены варианты ({len(variants_to_delete)}):")
             for number, title, description in sorted(variants_to_delete):
                 result.append(f"№{number}. {title}\n\n{description}")
         
