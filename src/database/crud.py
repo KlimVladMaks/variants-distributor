@@ -21,6 +21,7 @@ from .database import AsyncSession
 # ===== Студенты =====
 # ====================
 
+
 async def get_update_students_info(students):
     async with AsyncSession() as session:
         flows_result = await session.execute(select(Flow))
