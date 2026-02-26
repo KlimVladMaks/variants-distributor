@@ -542,7 +542,7 @@ async def student_confirm_update_variant(message: Message,
 
         
     else:
-        await message.state(
+        await message.answer(
             "Команда не распознана. Подтвердите выбор варианта."
         )
 
